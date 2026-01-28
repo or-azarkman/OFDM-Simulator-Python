@@ -123,10 +123,13 @@ def main():
     plot_constellations("16QAM", snr_list=(0, 10, 20))
 
     # ---------------------------
-    # שמירת תוצאות BER ב-CSV
+    # שמירת תוצאות BER ב-CSV כולל עמודת SNR
     # ---------------------------
-    np.savetxt("results/ber_vs_snr_500symbols_qpsk.csv", ber_qpsk, delimiter=",")
-    np.savetxt("results/ber_vs_snr_500symbols_16qam.csv", ber_16qam, delimiter=",")
+    snr_ber_qpsk = np.column_stack((SNR_RANGE, ber_qpsk))
+    snr_ber_16qam = np.column_stack((SNR_RANGE, ber_16qam))
+    
+    np.savetxt("results/ber_vs_snr_500symbols_qpsk.csv", snr_ber_qpsk, delimiter=",", header="SNR(dB),BER", comments="")
+    np.savetxt("results/ber_vs_snr_500symbols_16qam.csv", snr_ber_16qam, delimiter=",", header="SNR(dB),BER", comments="")
 
 if __name__ == "__main__":
     main()
