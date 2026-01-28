@@ -137,6 +137,10 @@ The selected FFT and CP sizes are commonly used in practical OFDM systems, balan
 
 ---
 
+- The channel uses an Additive White Gaussian Noise (AWGN) model, adding complex Gaussian noise to the transmitted baseband signal based on SNR.
+
+---
+
 ## Key Outputs
 - Time‑domain OFDM waveforms  
 - Transmit and receive constellation diagrams  
