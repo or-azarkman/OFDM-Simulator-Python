@@ -122,6 +122,11 @@ def main():
     plot_constellations("QPSK", snr_list=(0, 10, 20))
     plot_constellations("16QAM", snr_list=(0, 10, 20))
 
+    # ---------------------------
+    # שמירת תוצאות BER ב-CSV
+    # ---------------------------
+    np.savetxt("results/ber_vs_snr_500symbols_qpsk.csv", ber_qpsk, delimiter=",")
+    np.savetxt("results/ber_vs_snr_500symbols_16qam.csv", ber_16qam, delimiter=",")
 
 if __name__ == "__main__":
     main()
