@@ -1,7 +1,6 @@
 # OFDM-Simulator-Python
 **OFDM PHY-layer simulation in Python including QAM, FFT/IFFT, CP and BER analysis**
 
-
 ## Overview
 This project implements an end-to-end **OFDM (Orthogonal Frequency Division Multiplexing) transceiver simulation** in Python, focusing on PHY-layer concepts used in modern wireless communication systems.
 
@@ -53,14 +52,17 @@ The project focuses on simulation and analysis only, without SDR or hardware int
 - BER computation
 - Constellation and performance plots
 
+### Receiver Processing
+In the receiver, after removing the cyclic prefix, a Fast Fourier Transform (FFT) converts the time-domain OFDM symbols back to frequency‑domain subcarriers. These symbols are demodulated (e.g., QPSK) into bits, and the Bit Error Rate (BER) is computed by comparing the recovered bits to the original transmitted bits. This reflects the standard OFDM demodulation chain involving FFT‑based processing and decision making. :contentReference[oaicite:0]{index=0}
+
 ### Not Included:
-- SDR or real-time hardware implementation
-- Synchronization algorithms (CFO, timing offset) — optional future extension
-- Multipath fading (may be added in later stages)
+- SDR or real-time hardware implementation  
+- Synchronization algorithms (CFO, timing offset) — optional future extension  
+- Multipath fading channels (may be added in later stages)
 
 ---
-```
 
+```
 ## Planned Project Structure
 
 OFDM-Simulator-Python/
@@ -94,4 +96,3 @@ Upcoming stages:
 
 ## License
 This project is licensed under the MIT License.
-
