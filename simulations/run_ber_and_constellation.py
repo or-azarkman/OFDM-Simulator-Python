@@ -17,8 +17,8 @@ from src.channel import awgn_channel
 # ----------------------------------
 FFT_SIZE = 64
 CP_LEN = 16
-NUM_SYMBOLS = 500          # שנה כאן למספר סימבולים הרצוי
-MONTE_CARLO_TRIALS = 50     # כמה ניסויים לכל נקודת SNR
+NUM_SYMBOLS = 5000 
+MONTE_CARLO_TRIALS = 50  
 
 # SNR range for BER curves
 SNR_RANGE = np.arange(0, 21, 2)  # 0–20 dB
