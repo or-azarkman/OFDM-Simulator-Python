@@ -16,7 +16,7 @@ from src.channel import awgn_channel
 # ----------------------------------
 FFT_SIZE = 64
 CP_LEN = 16
-NUM_SYMBOLS = 5000           # number of OFDM symbols per run
+NUM_SYMBOLS = 500           # number of OFDM symbols per run
 MONTE_CARLO_TRIALS = 50     # how many random runs per SNR point
 
 # SNR range for BER curves
