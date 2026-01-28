@@ -56,13 +56,11 @@ def fft_ofdm(ofdm_no_cp: np.ndarray) -> np.ndarray:
 
 def qpsk_demodulate(symbols: np.ndarray) -> np.ndarray:
     """
-    Demodulate QPSK symbols into bits.
+    Demodulate QPSK symbols into bits (Gray-coded mapping).
 
-    For each QPSK symbol sym:
-        real(sym) >= 0 -> b0 = 0
-        real(sym) <  0 -> b0 = 1
-        imag(sym) >= 0 -> b1 = 0
-        imag(sym) <  0 -> b1 = 1
+    Corrected mapping to match the transmitter. For each symbol sym:
+        - real(sym) >= 0 -> bit0 = 0, else 1
+        - imag(sym) >= 0 -> bit1 = 0, else 1
 
     Args:
         symbols (np.ndarray):
@@ -86,7 +84,7 @@ def qam16_demodulate(symbols: np.ndarray) -> np.ndarray:
 
     The Gray coded 16‑QAM constellation assigns bit patterns so that
     adjacent signal points differ in only one bit, which improves BER
-    in the presence of noise. :contentReference[oaicite:1]{index=1}
+    in the presence of noise.
 
     Args:
         symbols (np.ndarray):
@@ -97,7 +95,6 @@ def qam16_demodulate(symbols: np.ndarray) -> np.ndarray:
             1D array of demodulated bits.
     """
     # Gray mapping table for 16 QAM
-    # Each key is an ideal constellation point, and each value is the bit tuple.
     ideal = {
         -3 - 3j: (0,0,0,0),  -3 - 1j: (0,0,0,1),
         -3 + 1j: (0,0,1,1),  -3 + 3j: (0,0,1,0),
@@ -109,7 +106,7 @@ def qam16_demodulate(symbols: np.ndarray) -> np.ndarray:
          3 - 1j: (1,0,0,1),   3 - 3j: (1,0,0,0)
     }
 
-    # Normalize table to match the same normalization used in transmitter
+    # Normalize to match transmitter scaling
     ideal_norm = {pt/np.sqrt(10): bits for pt, bits in ideal.items()}
 
     bits_out = []
