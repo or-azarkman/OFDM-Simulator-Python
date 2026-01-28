@@ -17,8 +17,8 @@ from src.channel import awgn_channel
 # ----------------------------------
 FFT_SIZE = 64
 CP_LEN = 16
-NUM_SYMBOLS = 500           # number of OFDM symbols per run
-MONTE_CARLO_TRIALS = 50     # how many random runs per SNR point
+NUM_SYMBOLS = 500          # שנה כאן למספר סימבולים הרצוי
+MONTE_CARLO_TRIALS = 50     # כמה ניסויים לכל נקודת SNR
 
 # SNR range for BER curves
 SNR_RANGE = np.arange(0, 21, 2)  # 0–20 dB
@@ -31,51 +31,34 @@ os.makedirs("results/images", exist_ok=True)
 # BER Simulation (with Monte Carlo)
 # ----------------------------------
 def simulate_ber_monte_carlo(modulation: str) -> np.ndarray:
-    """
-    Simulate BER vs. SNR for a given modulation type using Monte Carlo.
-    """
     ber_out_avg = []
     bits_per_sub = 2 if modulation == "QPSK" else 4
 
     for snr in SNR_RANGE:
         ber_trials = []
-        for trial in range(MONTE_CARLO_TRIALS):
-            # random bits
+        for _ in range(MONTE_CARLO_TRIALS):
             total_bits = NUM_SYMBOLS * FFT_SIZE * bits_per_sub
             bits_tx = generate_random_bits(total_bits)
 
-            # TX
-            ofdm_stream = generate_ofdm_stream(
-                bits_tx, FFT_SIZE, CP_LEN, modulation=modulation
-            )
-
-            # Channel: AWGN
+            ofdm_stream = generate_ofdm_stream(bits_tx, FFT_SIZE, CP_LEN, modulation)
             noisy_stream = awgn_channel(ofdm_stream, snr)
-
-            # RX
             ofdm_no_cp = remove_cyclic_prefix(noisy_stream, CP_LEN)
             freq_symbols = fft_ofdm(ofdm_no_cp)
             bits_rx = demodulate_ofdm_symbols(freq_symbols, modulation)
 
-            # compute BER
             ber_value = compute_ber(bits_tx, bits_rx)
             ber_trials.append(ber_value)
 
-        # average BER over Monte Carlo trials
         avg_ber = np.mean(ber_trials)
-        print(f"{modulation} @ {snr} dB → avg BER = {avg_ber:.4e}")
+        print(f"{modulation} @ {snr} dB → avg BER = {avg_ber:.6e}")
         ber_out_avg.append(avg_ber)
 
     return np.array(ber_out_avg)
-
 
 # ----------------------------------
 # Constellation Plot Function
 # ----------------------------------
 def plot_constellations(modulation: str, snr_list=(0, 10, 20)):
-    """
-    Plot and save constellation diagrams for selected SNR levels.
-    """
     plt.figure(figsize=(len(snr_list) * 4, 4))
     
     bits_per_sub = 2 if modulation == "QPSK" else 4
@@ -84,7 +67,6 @@ def plot_constellations(modulation: str, snr_list=(0, 10, 20)):
     for idx, snr in enumerate(snr_list):
         bits_tx = generate_random_bits(total_bits)
         ofdm_symbol = generate_ofdm_stream(bits_tx, FFT_SIZE, CP_LEN, modulation)
-
         noisy = awgn_channel(ofdm_symbol, snr)
         base_no_cp = remove_cyclic_prefix(noisy, CP_LEN)
         freq_syms = fft_ofdm(base_no_cp)
@@ -100,10 +82,9 @@ def plot_constellations(modulation: str, snr_list=(0, 10, 20)):
 
     plt.suptitle(f"{modulation} Constellation\n{NUM_SYMBOLS} OFDM symbols, FFT={FFT_SIZE}, CP={CP_LEN}")
     plt.tight_layout(rect=[0, 0, 1, 0.95])
-    plt.savefig(f"results/images/constellation_{modulation}.png", dpi=300)
+    plt.savefig(f"results/images/constellation_{modulation}_{NUM_SYMBOLS}symbols.png", dpi=300)
     plt.show()
     plt.close()
-
 
 # ----------------------------------
 # Main Execution
@@ -124,7 +105,7 @@ def main():
     plt.ylabel("Bit Error Rate (BER)")
     plt.grid(True, which='both')
     plt.legend()
-    plt.savefig("results/images/ber_vs_snr.png", dpi=300)
+    plt.savefig(f"results/images/ber_vs_snr_{NUM_SYMBOLS}symbols.png", dpi=300)
     plt.show()
     plt.close()
 
@@ -135,15 +116,23 @@ def main():
     plot_constellations("16QAM", snr_list=(0, 10, 20))
 
     # ---------------------------
-    # Save BER results to CSV with SNR column
+    # Save BER results to CSV with SNR as integer
     # ---------------------------
-    snr_ber_qpsk = np.column_stack((SNR_RANGE, ber_qpsk))
-    snr_ber_16qam = np.column_stack((SNR_RANGE, ber_16qam))
+    snr_ber_qpsk = np.column_stack((SNR_RANGE.astype(int), ber_qpsk))
+    snr_ber_16qam = np.column_stack((SNR_RANGE.astype(int), ber_16qam))
     
-    np.savetxt("results/ber_vs_snr_500symbols_qpsk.csv", snr_ber_qpsk, delimiter=",",
-               header="SNR(dB),BER", comments="")
-    np.savetxt("results/ber_vs_snr_500symbols_16qam.csv", snr_ber_16qam, delimiter=",",
-               header="SNR(dB),BER", comments="")
+    np.savetxt(f"results/ber_vs_snr_{NUM_SYMBOLS}symbols_qpsk.csv",
+               snr_ber_qpsk,
+               delimiter=",",
+               header="SNR(dB),BER",
+               comments="",
+               fmt=['%d', '%.6e'])
+    np.savetxt(f"results/ber_vs_snr_{NUM_SYMBOLS}symbols_16qam.csv",
+               snr_ber_16qam,
+               delimiter=",",
+               header="SNR(dB),BER",
+               comments="",
+               fmt=['%d', '%.6e'])
 
 if __name__ == "__main__":
     main()
