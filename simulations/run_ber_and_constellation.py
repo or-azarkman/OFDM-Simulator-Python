@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 from src.transmitter import (
     generate_random_bits,
@@ -20,7 +21,11 @@ NUM_SYMBOLS = 500           # number of OFDM symbols per run
 MONTE_CARLO_TRIALS = 50     # how many random runs per SNR point
 
 # SNR range for BER curves
-SNR_RANGE = np.arange(0, 21, 2)  # e.g. 0–20 dB
+SNR_RANGE = np.arange(0, 21, 2)  # 0–20 dB
+
+# Ensure results directories exist
+os.makedirs("results", exist_ok=True)
+os.makedirs("results/images", exist_ok=True)
 
 # ----------------------------------
 # BER Simulation (with Monte Carlo)
@@ -69,7 +74,7 @@ def simulate_ber_monte_carlo(modulation: str) -> np.ndarray:
 # ----------------------------------
 def plot_constellations(modulation: str, snr_list=(0, 10, 20)):
     """
-    Plot constellation diagrams for selected SNR levels.
+    Plot and save constellation diagrams for selected SNR levels.
     """
     plt.figure(figsize=(len(snr_list) * 4, 4))
     
@@ -78,9 +83,7 @@ def plot_constellations(modulation: str, snr_list=(0, 10, 20)):
 
     for idx, snr in enumerate(snr_list):
         bits_tx = generate_random_bits(total_bits)
-        ofdm_symbol = generate_ofdm_stream(
-            bits_tx, FFT_SIZE, CP_LEN, modulation
-        )
+        ofdm_symbol = generate_ofdm_stream(bits_tx, FFT_SIZE, CP_LEN, modulation)
 
         noisy = awgn_channel(ofdm_symbol, snr)
         base_no_cp = remove_cyclic_prefix(noisy, CP_LEN)
@@ -95,8 +98,11 @@ def plot_constellations(modulation: str, snr_list=(0, 10, 20)):
         plt.ylabel("Imag")
         plt.grid(True)
 
-    plt.tight_layout()
+    plt.suptitle(f"{modulation} Constellation\n{NUM_SYMBOLS} OFDM symbols, FFT={FFT_SIZE}, CP={CP_LEN}")
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.savefig(f"results/images/constellation_{modulation}.png", dpi=300)
     plt.show()
+    plt.close()
 
 
 # ----------------------------------
@@ -107,29 +113,37 @@ def main():
     ber_qpsk = simulate_ber_monte_carlo("QPSK")
     ber_16qam = simulate_ber_monte_carlo("16QAM")
 
-    # Plot BER vs SNR curve
+    # ---------------------------
+    # Plot BER vs SNR
+    # ---------------------------
     plt.figure()
     plt.semilogy(SNR_RANGE, ber_qpsk, 'o-', label="QPSK")
     plt.semilogy(SNR_RANGE, ber_16qam, 's-', label="16‑QAM")
-    plt.title("BER vs SNR for OFDM (AWGN Channel) — Monte Carlo")
+    plt.title(f"BER vs SNR for OFDM (AWGN Channel)\n{NUM_SYMBOLS} symbols, {MONTE_CARLO_TRIALS} trials, FFT={FFT_SIZE}, CP={CP_LEN}")
     plt.xlabel("SNR (dB)")
     plt.ylabel("Bit Error Rate (BER)")
     plt.grid(True, which='both')
     plt.legend()
+    plt.savefig("results/images/ber_vs_snr.png", dpi=300)
     plt.show()
+    plt.close()
 
+    # ---------------------------
     # Constellations at selected SNRs
+    # ---------------------------
     plot_constellations("QPSK", snr_list=(0, 10, 20))
     plot_constellations("16QAM", snr_list=(0, 10, 20))
 
     # ---------------------------
-    # שמירת תוצאות BER ב-CSV כולל עמודת SNR
+    # Save BER results to CSV with SNR column
     # ---------------------------
     snr_ber_qpsk = np.column_stack((SNR_RANGE, ber_qpsk))
     snr_ber_16qam = np.column_stack((SNR_RANGE, ber_16qam))
     
-    np.savetxt("results/ber_vs_snr_500symbols_qpsk.csv", snr_ber_qpsk, delimiter=",", header="SNR(dB),BER", comments="")
-    np.savetxt("results/ber_vs_snr_500symbols_16qam.csv", snr_ber_16qam, delimiter=",", header="SNR(dB),BER", comments="")
+    np.savetxt("results/ber_vs_snr_500symbols_qpsk.csv", snr_ber_qpsk, delimiter=",",
+               header="SNR(dB),BER", comments="")
+    np.savetxt("results/ber_vs_snr_500symbols_16qam.csv", snr_ber_16qam, delimiter=",",
+               header="SNR(dB),BER", comments="")
 
 if __name__ == "__main__":
     main()
