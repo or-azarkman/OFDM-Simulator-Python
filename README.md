@@ -51,7 +51,7 @@ The simulation operates at baseband and does **not** include real‑time hardwar
 - Digital modulation: **QPSK** and **16‑QAM (Gray coded)**  
 - OFDM modulation using **IFFT**  
 - Cyclic Prefix (CP) insertion and removal  
-- AWGN channel modeling  
+- AWGN channel modeling (complex baseband noise according to specified SNR)
 - OFDM demodulation using **FFT**  
 - Bit Error Rate (BER) computation  
 - Constellation and performance visualization
