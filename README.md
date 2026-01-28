@@ -1,128 +1,151 @@
-# OFDM‑Simulator‑Python  
-**OFDM PHY‑layer simulation in Python including QPSK & 16‑QAM, FFT/IFFT, Cyclic Prefix (CP), and BER analysis**
+# OFDM-Simulator-Python  
+**End-to-End OFDM PHY-Layer Simulation in Python (QPSK & 16-QAM)**
+
+---
 
 ## Overview
-This project implements an end‑to‑end **OFDM (Orthogonal Frequency Division Multiplexing) transceiver simulation** in Python, focusing on PHY‑layer signal processing concepts used in modern wireless communication systems.
+This project implements a complete **OFDM (Orthogonal Frequency Division Multiplexing) baseband transceiver simulation** in Python, covering both transmitter and receiver chains.
 
-The goal of this project is to design, implement, and evaluate a modular OFDM system including bit generation, modulation, transmission, channel effects, and receiver processing. The focus is on performance analysis and clear system‑level understanding of core OFDM components.
+The simulator focuses on PHY-layer signal processing concepts used in modern wireless systems and provides quantitative performance evaluation through **BER analysis** and **constellation visualization**.
+
+Supported modulation schemes:
+- **QPSK**
+- **16-QAM (Gray-coded)**
 
 ---
 
 ## Project Objectives
-- Implement a complete OFDM transmitter and receiver chain  
-- Support multiple digital modulation schemes (**QPSK** and **16‑QAM (Gray coded)**)  
-- Simulate realistic channel conditions using **AWGN**  
-- Evaluate system performance using **BER vs. SNR**  
-- Visualize signal behavior using **constellation diagrams and performance plots**  
-- Provide clean, modular, and well‑documented code suitable for engineering review
+- Design and implement a full OFDM transmitter and receiver
+- Support multiple digital modulation schemes
+- Model realistic noise conditions using **AWGN**
+- Evaluate performance using **BER vs. SNR**
+- Compare modulation performance under identical channel conditions
+- Produce clean, modular, and well-documented code suitable for engineering review
 
 ---
 
 ## Why OFDM?
-Orthogonal Frequency Division Multiplexing (OFDM) is a multi‑carrier modulation technique widely used in modern communication standards such as:
-- Wi‑Fi (IEEE 802.11 family)  
-- LTE / 5G  
-- DVB‑T and other broadcast standards
+OFDM is a multi-carrier modulation technique used in modern communication standards such as:
+- Wi-Fi (IEEE 802.11)
+- LTE / 5G
+- DVB-T
 
-The key idea in OFDM is to divide the available bandwidth into multiple orthogonal subcarriers, each modulated with its own set of data symbols. A guard interval known as a cyclic prefix is added to mitigate inter‑symbol interference.
+By dividing the available bandwidth into orthogonal subcarriers and using FFT/IFFT processing, OFDM enables efficient spectrum usage and robustness to channel impairments.
 
-Implementing OFDM from scratch demonstrates:
-- Understanding of DSP fundamentals such as FFT/IFFT and sampling  
-- Practical realization of modulation and demodulation chains for communication systems  
-- Ability to integrate modulation schemes, noise modeling, and performance evaluation
+This project demonstrates:
+- Practical application of FFT/IFFT in communication systems
+- End-to-end modulation and demodulation chains
+- Performance trade-offs between modulation orders
 
 ---
 
 ## Tools & Technologies
-This project is developed using:
-- **Python 3.x**  
-- NumPy — numerical array processing  
-- SciPy — scientific computing support  
-- Matplotlib — for plotting and visualization
+- **Python 3.x**
+- **NumPy** — numerical processing
+- **SciPy** — scientific utilities
+- **Matplotlib** — constellation and BER visualization
 
-The simulation operates at baseband and does **not** include real‑time hardware or SDR integration.
-
----
-
-## Project Scope
-
-### Included Features
-- Random bitstream generation  
-- Digital modulation: **QPSK** and **16‑QAM (Gray coded)**  
-- OFDM modulation using **IFFT**  
-- Cyclic Prefix (CP) insertion and removal  
-- AWGN channel modeling (complex baseband noise according to specified SNR)
-- OFDM demodulation using **FFT**  
-- Bit Error Rate (BER) computation  
-- Constellation and performance visualization
-
-### Receiver Processing
-After cyclic prefix removal, the receiver applies an **FFT** to convert time‑domain OFDM symbols back to the frequency domain. These frequency‑domain symbols are then demodulated using the same modulation scheme used at the transmitter (QPSK or 16‑QAM). Finally, the Bit Error Rate (BER) is calculated by comparing the recovered bits to the transmitted bits — matching the standard OFDM demodulation chain.
-
-### Not Included (Stage 1)
-- SDR or real‑hardware implementation  
-- Synchronization algorithms (CFO, timing offset)  
-- Multipath fading channels (future extension)  
-- Forward Error Correction (FEC)
+Simulation is performed entirely at **complex baseband** (no RF or SDR hardware).
 
 ---
 
-## Planned Project Structure
+## Implemented System Features
+
+### Transmitter
+- Random bitstream generation
+- Symbol mapping (QPSK / 16-QAM, Gray-coded)
+- OFDM modulation using **IFFT**
+- Cyclic Prefix (CP) insertion
+
+### Channel
+- **AWGN channel** with configurable SNR
+- Complex Gaussian noise scaled according to signal power
+
+### Receiver
+- Cyclic Prefix removal
+- OFDM demodulation using **FFT**
+- Symbol demapping
+- Bit Error Rate (BER) calculation
+
+---
+
+## Simulation Results & Analysis
+
+Simulations were executed using:
+- **500 OFDM symbols**
+- **5000 OFDM symbols**
+
+For each configuration, results include:
+- Transmit and receive constellation diagrams
+- BER measurements under AWGN
+- Visual comparison between QPSK and 16-QAM
+
+### Key Observations
+- **QPSK** exhibits strong noise robustness with tighter constellation clustering and lower BER at a given SNR.
+- **16-QAM** provides higher spectral efficiency but shows increased sensitivity to noise, requiring higher SNR for comparable BER.
+- Increasing the number of OFDM symbols improves BER estimation stability and reduces statistical variance.
+
+---
+
+## Project Structure
 
 ```
-OFDM‑Simulator‑Python/
+OFDM-Simulator-Python/
 │
-├── src/             # Core OFDM transmitter and receiver modules
-│ ├── transmitter.py # OFDM transmitter implementation
-│ ├── receiver.py    # OFDM receiver implementation
-│ └── (future utils) # e.g., channel models, plotting helpers
-├── simulations/     # Scripts to run experiments (e.g., BER vs SNR, plots)
-├── results/         # Generated plots and performance figures
-├── docs/            # Documentation and explanations
-│ ├── ofdm_overview.md
-│ └── images/        # Block diagrams and illustrations
-├── README.md        # Project overview and instructions
+├── src/             # Core OFDM system modules
+│ ├── transmitter.py # Bit generation, modulation, IFFT, CP insertion
+│ ├── receiver.py    # CP removal, FFT, demodulation, BER
+│ └── channel.py     # AWGN channel model
+│
+├── simulations/     # Simulation scripts (BER & constellation runs)
+│
+├── results/         # Simulation outputs
+│ ├── 500_SYMBOLS/
+│ │ └── images/      # Constellation & BER plots (500 symbols)
+│ │
+│ ├── 5000_SYMBOLS/
+│ │ └── images/      # Constellation & BER plots (5000 symbols)
+│ │
+│ └── summary/       # Optional aggregated results / comparisons
+│
+├── README.md
 └── .gitignore
 ```
 
----
-
-## Simulation Outputs (Planned)
-The simulation produces:
-- Time‑domain OFDM waveforms  
-- Transmit and receive constellation diagrams  
-- BER vs SNR performance curves
-
-These outputs help visualize and compare modulation performance (e.g., QPSK vs 16‑QAM).
 
 ---
 
-## Usage Workflow (High‑Level)
-A typical experiment flow might include:
-1. Generate a random bitstream  
-2. Choose a modulation type (QPSK or 16‑QAM)  
-3. Use the transmitter module to generate OFDM symbols  
-4. Pass symbols through an AWGN channel model  
-5. Use the receiver module to recover bits  
-6. Plot constellation diagrams and BER vs SNR curves  
-
-Concrete example scripts for these workflows are located in the `simulations/` directory.
+## Usage Workflow
+1. Select modulation scheme (QPSK or 16-QAM)
+2. Configure number of OFDM symbols and SNR
+3. Run simulation script from `simulations/`
+4. Generated plots are saved automatically under `results/`
+5. Analyze BER and constellation behavior
 
 ---
 
 ## Project Status
-**Stage 1 – System definition and documentation** is complete.
+**Stage: Core PHY-Layer Simulation – Completed**
 
-Upcoming/ongoing work:
-- Scripts for performance evaluation and analysis  
-- Optional enhancements such as synchronization and advanced channel models
+Implemented and validated:
+- OFDM TX/RX chain
+- QPSK & 16-QAM modulation
+- AWGN channel
+- BER computation
+- Result visualization
+
+Planned future extensions:
+- Multipath fading channels
+- Synchronization (CFO, timing offset)
+- Channel estimation
+- Forward Error Correction (FEC)
 
 ---
 
 ## License
-This project is licensed under the **MIT License**.
+MIT License
 
 ---
 
-## Notes & References
-This README reflects standard OFDM system components and simulation methodology based on established OFDM implementations and educational descriptions.
+## Notes
+This project is intended as an educational and professional demonstration of OFDM PHY-layer concepts and is suitable for portfolio presentation and technical interviews.
