@@ -58,9 +58,11 @@ def qpsk_demodulate(symbols: np.ndarray) -> np.ndarray:
     """
     Demodulate QPSK symbols into bits (Gray-coded mapping).
 
-    Corrected mapping to match the transmitter. For each symbol sym:
-        - real(sym) >= 0 -> bit0 = 0, else 1
-        - imag(sym) >= 0 -> bit1 = 0, else 1
+    This function matches the exact mapping used in the transmitter:
+        00 ->  1 + 1j
+        01 -> -1 + 1j
+        11 -> -1 - 1j
+        10 ->  1 - 1j
 
     Args:
         symbols (np.ndarray):
@@ -72,9 +74,15 @@ def qpsk_demodulate(symbols: np.ndarray) -> np.ndarray:
     """
     bits_out = []
     for sym in symbols.flatten():
-        b0 = 0 if sym.real >= 0 else 1
-        b1 = 0 if sym.imag >= 0 else 1
-        bits_out.extend([b0, b1])
+        # Map back to original bit pattern
+        if sym.real >= 0 and sym.imag >= 0:
+            bits_out.extend([0, 0])
+        elif sym.real < 0 and sym.imag >= 0:
+            bits_out.extend([0, 1])
+        elif sym.real < 0 and sym.imag < 0:
+            bits_out.extend([1, 1])
+        elif sym.real >= 0 and sym.imag < 0:
+            bits_out.extend([1, 0])
     return np.array(bits_out)
 
 
