@@ -1,6 +1,6 @@
 # Lessons Learned — OFDM Simulator
 
-Short reflection on what was learned, current limitations, and planned improvements. See also `docs/IMPLEMENTATION_PLAN.md` (next phase) and `docs/INTERVIEWER_EVALUATION.md` (evaluation summary).
+Short reflection on what was learned, current limitations, and planned improvements. Next-phase roadmap: `docs/NEXT_PHASE_PLAN.md`.
 
 ---
 
@@ -26,13 +26,13 @@ Short reflection on what was learned, current limitations, and planned improveme
 
 - **Forward error correction (FEC):** No coding (e.g. convolutional or LDPC). BER results are for uncoded transmission.
 
-- **Other:** No CFO/phase noise, no multi-antenna (MIMO), no RF/SDR; simulation is complex baseband only.
+- **Other:** No multi-antenna (MIMO), no RF/SDR; simulation is complex baseband only.
 
 ---
 
 ## Future improvements (planned or optional)
 
-In order of priority, as in `docs/IMPLEMENTATION_PLAN.md` and `docs/NEXT_PHASE_PLAN.md`:
+In order of priority (see `docs/NEXT_PHASE_PLAN.md` for details):
 
 1. **EVM (Error Vector Magnitude):** Add computation and plots of EVM vs SNR (and optionally vs scenario). EVM is a standard metric in 3GPP and Wi-Fi; easy to add from existing symbols.
 
