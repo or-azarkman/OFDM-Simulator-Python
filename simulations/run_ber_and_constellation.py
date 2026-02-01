@@ -23,11 +23,43 @@ from src.receiver import (
     demodulate_ofdm_symbols,
     compute_ber,
 )
-from src.channel import awgn_channel
+from src.channel import awgn_channel, multipath_channel
 from src.theory import theoretical_ber
 
-# Default config (override by passing config to main())
 CONFIG = SimulationConfig()
+
+
+def _apply_channel(stream: np.ndarray, config: SimulationConfig, snr_db: float) -> np.ndarray:
+    if config.channel_type.lower() == "multipath" and config.multipath_taps is not None:
+        return multipath_channel(stream, config.multipath_taps, snr_db, config.cp_len)
+    return awgn_channel(stream, snr_db)
+
+
+def _after_channel_no_cp(stream: np.ndarray, config: SimulationConfig) -> np.ndarray:
+    """Return time-domain symbols without CP for FFT. Multipath channel already returns no CP."""
+    if config.channel_type.lower() == "multipath":
+        return stream
+    return remove_cyclic_prefix(stream, config.cp_len)
+
+
+def _multipath_freq_response(config: SimulationConfig) -> np.ndarray:
+    """Channel frequency response H_k for one-tap equalization (multipath). Length = fft_size."""
+    if config.channel_type.lower() != "multipath" or config.multipath_taps is None:
+        return np.ones(config.fft_size, dtype=complex)
+    taps = np.asarray(config.multipath_taps, dtype=complex)
+    h_pad = np.zeros(config.fft_size, dtype=complex)
+    h_pad[: len(taps)] = taps
+    return np.fft.fft(h_pad)
+
+
+def _equalize_if_multipath(freq_symbols: np.ndarray, config: SimulationConfig) -> np.ndarray:
+    """One-tap ZF equalization for multipath: Y_k / H_k. No-op for AWGN."""
+    if config.channel_type.lower() != "multipath" or config.multipath_taps is None:
+        return freq_symbols
+    H = _multipath_freq_response(config)
+    # Avoid division by zero; nulls are rare for short taps
+    H_safe = np.where(np.abs(H) < 1e-10, 1.0, H)
+    return freq_symbols / H_safe
 
 
 def simulate_ber_monte_carlo(
@@ -56,9 +88,10 @@ def simulate_ber_monte_carlo(
             ofdm_stream = generate_ofdm_stream(
                 bits_tx, config.fft_size, config.cp_len, modulation
             )
-            noisy_stream = awgn_channel(ofdm_stream, float(snr_db))
-            ofdm_no_cp = remove_cyclic_prefix(noisy_stream, config.cp_len)
+            noisy_stream = _apply_channel(ofdm_stream, config, float(snr_db))
+            ofdm_no_cp = _after_channel_no_cp(noisy_stream, config)
             freq_symbols = fft_ofdm(ofdm_no_cp)
+            freq_symbols = _equalize_if_multipath(freq_symbols, config)
             bits_rx = demodulate_ofdm_symbols(freq_symbols, modulation)
 
             ber_trials.append(compute_ber(bits_tx, bits_rx))
@@ -75,9 +108,8 @@ def plot_ber_vs_snr(
     ber_qpsk: np.ndarray,
     ber_16qam: np.ndarray,
 ) -> None:
-    """
-    Plot simulated and theoretical BER vs SNR; save to config run directory.
-    """
+    is_multipath = config.channel_type.lower() == "multipath"
+    channel_label = "Multipath" if is_multipath else "AWGN"
     theory_qpsk = theoretical_ber(config.snr_range_db, "QPSK")
     theory_16qam = theoretical_ber(config.snr_range_db, "16QAM")
 
@@ -90,14 +122,15 @@ def plot_ber_vs_snr(
         color="C0",
         markersize=6,
     )
-    ax.semilogy(
-        config.snr_range_db,
-        theory_qpsk,
-        "--",
-        label="QPSK (theoretical)",
-        color="C0",
-        alpha=0.8,
-    )
+    if not is_multipath:
+        ax.semilogy(
+            config.snr_range_db,
+            theory_qpsk,
+            "--",
+            label="QPSK (theoretical)",
+            color="C0",
+            alpha=0.8,
+        )
     ax.semilogy(
         config.snr_range_db,
         ber_16qam,
@@ -106,26 +139,27 @@ def plot_ber_vs_snr(
         color="C1",
         markersize=6,
     )
-    ax.semilogy(
-        config.snr_range_db,
-        theory_16qam,
-        "--",
-        label="16-QAM (theoretical)",
-        color="C1",
-        alpha=0.8,
-    )
+    if not is_multipath:
+        ax.semilogy(
+            config.snr_range_db,
+            theory_16qam,
+            "--",
+            label="16-QAM (theoretical)",
+            color="C1",
+            alpha=0.8,
+        )
     ax.set_xlabel("SNR (dB)")
     ax.set_ylabel("Bit Error Rate (BER)")
     ax.set_title(
-        f"BER vs SNR — OFDM AWGN\n"
+        f"BER vs SNR — OFDM {channel_label}\n"
         f"Symbols={config.num_symbols}, Trials={config.monte_carlo_trials}, "
         f"FFT={config.fft_size}, CP={config.cp_len}"
     )
     ax.legend(loc="upper right")
     ax.grid(True, which="both", alpha=0.3)
     ax.set_ylim(1e-5, 1)
-    fig.tight_layout()
-    out_path = config.images_dir / f"ber_vs_snr_{config.num_symbols}symbols.png"
+    suffix = "_multipath" if is_multipath else ""
+    out_path = config.images_dir / f"ber_vs_snr_{config.num_symbols}symbols{suffix}.png"
     fig.savefig(out_path, dpi=300)
     plt.close(fig)
     print(f"Saved: {out_path}\n")
@@ -146,9 +180,10 @@ def plot_constellations(
         ofdm_symbol = generate_ofdm_stream(
             bits_tx, config.fft_size, config.cp_len, modulation
         )
-        noisy = awgn_channel(ofdm_symbol, float(snr))
-        base_no_cp = remove_cyclic_prefix(noisy, config.cp_len)
+        noisy = _apply_channel(ofdm_symbol, config, float(snr))
+        base_no_cp = _after_channel_no_cp(noisy, config)
         freq_syms = fft_ofdm(base_no_cp)
+        freq_syms = _equalize_if_multipath(freq_syms, config)
 
         plt.subplot(1, len(snr_list), idx + 1)
         plt.scatter(
@@ -163,14 +198,47 @@ def plot_constellations(
         plt.grid(True)
         plt.axis("equal")
 
+    channel_label = "Multipath" if config.channel_type.lower() == "multipath" else "AWGN"
     plt.suptitle(
-        f"{modulation} Constellation — {config.num_symbols} symbols, "
+        f"{modulation} Constellation ({channel_label}) — {config.num_symbols} symbols, "
         f"FFT={config.fft_size}, CP={config.cp_len}"
     )
     plt.tight_layout(rect=[0, 0, 1, 0.95])
-    out_path = config.images_dir / f"constellation_{modulation}_{config.num_symbols}symbols.png"
+    suffix = "_multipath" if config.channel_type.lower() == "multipath" else ""
+    out_path = config.images_dir / f"constellation_{modulation}_{config.num_symbols}symbols{suffix}.png"
     plt.savefig(out_path, dpi=300)
     plt.close()
+    print(f"Saved: {out_path}")
+
+
+def plot_channel_response(config: SimulationConfig) -> None:
+    """Plot CIR (impulse response) and CFR (frequency response) for multipath.
+    Uses same normalized taps as the channel so CIR/CFR match simulation."""
+    if config.channel_type.lower() != "multipath" or config.multipath_taps is None:
+        return
+    taps = np.asarray(config.multipath_taps, dtype=complex)
+    taps_norm = taps / np.sqrt(np.sum(np.abs(taps) ** 2))
+    n_fft = config.fft_size
+    h_pad = np.zeros(n_fft, dtype=complex)
+    h_pad[: len(taps_norm)] = taps_norm
+    H = np.fft.fft(h_pad)
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(7, 6))
+    ax1.stem(np.arange(len(taps_norm)), np.abs(taps_norm), basefmt=" ")
+    ax1.set_xlabel("Tap index")
+    ax1.set_ylabel("|h[n]| (normalized)")
+    ax1.set_title("Channel impulse response (CIR)")
+    ax1.grid(True, alpha=0.3)
+
+    ax2.plot(np.arange(n_fft), np.abs(H), color="C0")
+    ax2.set_xlabel("Subcarrier index k")
+    ax2.set_ylabel("|H(k)|")
+    ax2.set_title("Channel frequency response (CFR)")
+    ax2.grid(True, alpha=0.3)
+    fig.tight_layout()
+    out_path = config.images_dir / f"channel_response_{config.num_symbols}symbols_multipath.png"
+    fig.savefig(out_path, dpi=300)
+    plt.close(fig)
     print(f"Saved: {out_path}")
 
 
@@ -179,10 +247,10 @@ def save_ber_csv(
     ber_qpsk: np.ndarray,
     ber_16qam: np.ndarray,
 ) -> None:
-    """Save BER vs SNR to CSV in run directory."""
     snr_int = config.snr_range_db.astype(int)
+    suffix = "_multipath" if config.channel_type.lower() == "multipath" else ""
     np.savetxt(
-        config.run_dir / f"ber_vs_snr_{config.num_symbols}symbols_qpsk.csv",
+        config.run_dir / f"ber_vs_snr_{config.num_symbols}symbols{suffix}_qpsk.csv",
         np.column_stack((snr_int, ber_qpsk)),
         delimiter=",",
         header="SNR(dB),BER",
@@ -190,7 +258,7 @@ def save_ber_csv(
         fmt=["%d", "%.6e"],
     )
     np.savetxt(
-        config.run_dir / f"ber_vs_snr_{config.num_symbols}symbols_16qam.csv",
+        config.run_dir / f"ber_vs_snr_{config.num_symbols}symbols{suffix}_16qam.csv",
         np.column_stack((snr_int, ber_16qam)),
         delimiter=",",
         header="SNR(dB),BER",
@@ -209,13 +277,16 @@ def main(config: Optional[SimulationConfig] = None) -> None:
         np.random.seed(cfg.random_seed)
         print(f"Random seed: {cfg.random_seed}")
 
-    print(f"BER simulation: {cfg.num_symbols} symbols, {cfg.monte_carlo_trials} trials")
+    ch_label = cfg.channel_type.lower()
+    print(f"BER simulation: {cfg.num_symbols} symbols, {cfg.monte_carlo_trials} trials, channel={ch_label}")
     ber_qpsk = simulate_ber_monte_carlo("QPSK", cfg)
     ber_16qam = simulate_ber_monte_carlo("16QAM", cfg)
 
     plot_ber_vs_snr(cfg, ber_qpsk, ber_16qam)
     save_ber_csv(cfg, ber_qpsk, ber_16qam)
 
+    if ch_label == "multipath":
+        plot_channel_response(cfg)
     print("Constellation plots...")
     plot_constellations("QPSK", cfg, snr_list=(0, 10, 20))
     plot_constellations("16QAM", cfg, snr_list=(0, 10, 20))
@@ -226,33 +297,22 @@ def main(config: Optional[SimulationConfig] = None) -> None:
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="OFDM BER + constellation simulation")
+    parser.add_argument("--symbols", type=int, default=5000, help="OFDM symbols")
+    parser.add_argument("--trials", type=int, default=50, help="Monte Carlo trials per SNR")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument("--no-seed", action="store_true", help="No seed")
     parser.add_argument(
-        "--symbols",
-        type=int,
-        default=5000,
-        help="Number of OFDM symbols (default: 5000)",
-    )
-    parser.add_argument(
-        "--trials",
-        type=int,
-        default=50,
-        help="Monte Carlo trials per SNR (default: 50)",
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=42,
-        help="Random seed for reproducibility (default: 42)",
-    )
-    parser.add_argument(
-        "--no-seed",
-        action="store_true",
-        help="Disable random seed (non-reproducible)",
+        "--channel",
+        type=str,
+        default="awgn",
+        choices=("awgn", "multipath"),
+        help="Channel: awgn or multipath (default: awgn)",
     )
     args = parser.parse_args()
     config = SimulationConfig(
         num_symbols=args.symbols,
         monte_carlo_trials=args.trials,
         random_seed=None if args.no_seed else args.seed,
+        channel_type=args.channel,
     )
     main(config)

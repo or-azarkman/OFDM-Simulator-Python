@@ -24,6 +24,9 @@ py run_simulation.py
 # Optional: fewer symbols / trials
 py run_simulation.py --symbols 500 --trials 20
 
+# Multipath channel (frequency-selective): results in results/<N>_symbols_multipath/
+py run_simulation.py --channel multipath
+
 # Run tests
 py -m pytest tests/ -v
 ```
@@ -32,8 +35,7 @@ py -m pytest tests/ -v
 
 **From Cursor:** Open `run_simulation.py` → right-click → **Run Python File**, or run `py run_simulation.py` in the integrated Terminal (project root).
 
-**Where results go:** `results/<num_symbols>_symbols/images/` (plots) and `results/<num_symbols>_symbols/*.csv`.  
-Step-by-step (Windows with `py`): **`docs/HOW_TO_RUN.md`**.
+**Where results go:** `results/<num_symbols>_symbols/images/` (AWGN) or `results/<num_symbols>_symbols_multipath/images/` (multipath); CSV in the same folder. Run and test commands: **`docs/RUN_AND_TEST.md`**.
 
 **Default run:** 5000 OFDM symbols, 50 Monte Carlo trials, SNR 0–20 dB. Outputs: BER vs SNR (simulated + theoretical), constellation plots, CSV data under `results/5000_symbols/`.
 
@@ -44,9 +46,9 @@ Step-by-step (Windows with `py`): **`docs/HOW_TO_RUN.md`**.
 This project implements a complete **OFDM (Orthogonal Frequency Division Multiplexing) baseband transceiver simulation** in Python, covering:
 
 - **Transmitter:** Bit generation → QPSK/16-QAM (Gray) → subcarrier mapping → IFFT → cyclic prefix
-- **Channel:** AWGN with configurable SNR (Es/N0)
-- **Receiver:** CP removal → FFT → demodulation → BER computation
-- **Validation:** Theoretical BER curves (QPSK, 16-QAM) plotted alongside simulated BER
+- **Channel:** AWGN or multipath (FIR taps + AWGN). Multipath uses circular convolution on the useful part of each symbol (after CP) so that in frequency domain Y_k = H_k·X_k + N_k; one-tap ZF equalization (Y_k/H_k) is applied so BER decreases with SNR.
+- **Receiver:** CP removal (or use channel output when multipath) → FFT → equalize if multipath → demodulation → BER computation
+- **Validation:** Theoretical BER (AWGN); simulated BER and constellation for AWGN and multipath; CIR/CFR plots for multipath
 
 Supported modulation: **QPSK**, **16-QAM (Gray-coded)**.
 
@@ -73,7 +75,7 @@ OFDM-Simulator-Python/
 ├── src/                    # Core OFDM modules
 │   ├── transmitter.py      # Bits, modulation, IFFT, CP
 │   ├── receiver.py         # CP removal, FFT, demod, BER
-│   ├── channel.py          # AWGN channel
+│   ├── channel.py          # AWGN + multipath (FIR taps)
 │   └── theory.py           # Theoretical BER (QPSK, 16-QAM)
 ├── simulations/
 │   ├── config.py           # SimulationConfig, seed, paths
@@ -84,7 +86,8 @@ OFDM-Simulator-Python/
 │   ├── test_channel.py
 │   └── test_theory.py
 ├── results/
-│   ├── <N>_symbols/        # Per-run: CSV + images/
+│   ├── <N>_symbols/        # AWGN: CSV + images/
+│   ├── <N>_symbols_multipath/   # Multipath: CSV + images + CIR/CFR
 │   └── summary/
 ├── docs/                   # OFDM overview, block diagram
 ├── requirements.txt
@@ -105,8 +108,10 @@ Simulation parameters are centralized in `simulations/config.py`:
 | `monte_carlo_trials` | 50      | Trials per SNR point           |
 | `snr_range_db`     | 0–20, step 2 | SNR sweep (dB)             |
 | `random_seed`      | 42        | Reproducible runs              |
+| `channel_type`     | "awgn"    | "awgn" or "multipath"         |
+| `multipath_taps`   | [1,0,0.4·e^j0.5] | FIR taps (multipath only) |
 
-Results are written to `results/<num_symbols>_symbols/` (CSV and `images/`). To change symbol count, instantiate `SimulationConfig(num_symbols=500)` and pass it to `main(config)`.
+Results are written to `results/<num_symbols>_symbols/` (AWGN) or `results/<num_symbols>_symbols_multipath/` (multipath); each contains CSV and `images/`. To change symbol count, instantiate `SimulationConfig(num_symbols=500)` and pass it to `main(config)`.
 
 ---
 
@@ -120,7 +125,8 @@ Results are written to `results/<num_symbols>_symbols/` (CSV and `images/`). To 
 
 - **QPSK:** Lower BER at a given SNR; better noise robustness, lower spectral efficiency.
 - **16-QAM:** Higher throughput (4 bits/symbol) but needs higher SNR for similar BER.
-- **Theoretical vs simulated:** Agreement confirms correct modulation, channel scaling, and BER computation.
+- **Theoretical vs simulated (AWGN):** Agreement confirms correct modulation, channel scaling, and BER computation.
+- **Multipath:** Circular convolution + one-tap ZF equalization; BER decreases with SNR (unlike raw multipath without equalization, which would show a high BER floor).
 
 ---
 
@@ -144,12 +150,14 @@ Full baseband chain (bits → QPSK/16-QAM → IFFT → CP; receiver: CP removal 
 
 From the project root:
 
-```bash
-pytest tests/ -v
-pytest tests/ -v --cov=src   # with coverage
+```powershell
+py -m pytest tests/ -v
+py -m pytest tests/ -v --cov=src   # with coverage (requires pytest-cov)
 ```
 
-Tests cover: bit generation, QPSK/16-QAM roundtrip (no noise), subcarrier mapping, IFFT/FFT/CP, AWGN behavior, theoretical BER API.
+On Linux/macOS: `pytest tests/ -v`. Full run/test reference: **`docs/RUN_AND_TEST.md`**.
+
+Tests cover: bit generation, QPSK/16-QAM roundtrip (no noise), subcarrier mapping, IFFT/FFT/CP, AWGN and multipath channel, theoretical BER API.
 
 ---
 

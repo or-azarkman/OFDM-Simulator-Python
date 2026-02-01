@@ -1,5 +1,5 @@
 # CI: Run tests on every push and pull request
-# Tests ≠ CI: Tests are the checks; CI is the system that runs them automatically.
+
 name: Tests
 
 on:
