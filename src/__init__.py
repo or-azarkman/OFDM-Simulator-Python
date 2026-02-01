@@ -13,4 +13,5 @@ __all__ = [
     "receiver",
     "channel",
     "theory",
+    "equalizers",
 ]

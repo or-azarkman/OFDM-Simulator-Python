@@ -25,6 +25,7 @@ from src.receiver import (
 )
 from src.channel import awgn_channel, multipath_channel
 from src.theory import theoretical_ber
+from src.equalizers import equalize_zf, equalize_mmse
 
 CONFIG = SimulationConfig()
 
@@ -43,7 +44,7 @@ def _after_channel_no_cp(stream: np.ndarray, config: SimulationConfig) -> np.nda
 
 
 def _multipath_freq_response(config: SimulationConfig) -> np.ndarray:
-    """Channel frequency response H_k for one-tap equalization (multipath). Length = fft_size."""
+    """Channel frequency response H_k (length = fft_size)."""
     if config.channel_type.lower() != "multipath" or config.multipath_taps is None:
         return np.ones(config.fft_size, dtype=complex)
     taps = np.asarray(config.multipath_taps, dtype=complex)
@@ -52,14 +53,48 @@ def _multipath_freq_response(config: SimulationConfig) -> np.ndarray:
     return np.fft.fft(h_pad)
 
 
-def _equalize_if_multipath(freq_symbols: np.ndarray, config: SimulationConfig) -> np.ndarray:
-    """One-tap ZF equalization for multipath: Y_k / H_k. No-op for AWGN."""
+def _equalize(freq_symbols: np.ndarray, config: SimulationConfig, snr_db: float) -> np.ndarray:
+    """Apply ZF or MMSE equalization when channel is multipath; no-op otherwise."""
     if config.channel_type.lower() != "multipath" or config.multipath_taps is None:
         return freq_symbols
+    eq = (getattr(config, "equalize", None) or "zf").lower()
+    if eq == "none":
+        return freq_symbols
     H = _multipath_freq_response(config)
-    # Avoid division by zero; nulls are rare for short taps
-    H_safe = np.where(np.abs(H) < 1e-10, 1.0, H)
-    return freq_symbols / H_safe
+    if eq == "mmse":
+        snr_linear = 10.0 ** (snr_db / 10.0)
+        return equalize_mmse(freq_symbols, H, snr_linear)
+    return equalize_zf(freq_symbols, H)
+
+
+def get_equalized_freq_symbols(
+    config: SimulationConfig,
+    modulation: str,
+    snr_db: float,
+    num_symbols: int = 1,
+) -> np.ndarray:
+    """Return equalized frequency-domain symbols for constellation plotting.
+    Used by plot_constellation_comparison to compare AWGN vs multipath (no eq, ZF, MMSE)."""
+    bits_per_sub = 2 if modulation.upper() == "QPSK" else 4
+    total_bits = num_symbols * config.fft_size * bits_per_sub
+    bits_tx = generate_random_bits(total_bits)
+    ofdm_stream = generate_ofdm_stream(
+        bits_tx, config.fft_size, config.cp_len, modulation
+    )
+    return get_freq_symbols_from_stream(ofdm_stream, config, snr_db)
+
+
+def get_freq_symbols_from_stream(
+    ofdm_stream: np.ndarray,
+    config: SimulationConfig,
+    snr_db: float,
+) -> np.ndarray:
+    """Return equalized frequency-domain symbols from a given OFDM stream (with CP).
+    Same stream can be passed to different configs (AWGN, multipath none/zf/mmse) for fair comparison."""
+    noisy = _apply_channel(ofdm_stream, config, float(snr_db))
+    ofdm_no_cp = _after_channel_no_cp(noisy, config)
+    freq = fft_ofdm(ofdm_no_cp)
+    return _equalize(freq, config, float(snr_db))
 
 
 def simulate_ber_monte_carlo(
@@ -91,7 +126,7 @@ def simulate_ber_monte_carlo(
             noisy_stream = _apply_channel(ofdm_stream, config, float(snr_db))
             ofdm_no_cp = _after_channel_no_cp(noisy_stream, config)
             freq_symbols = fft_ofdm(ofdm_no_cp)
-            freq_symbols = _equalize_if_multipath(freq_symbols, config)
+            freq_symbols = _equalize(freq_symbols, config, float(snr_db))
             bits_rx = demodulate_ofdm_symbols(freq_symbols, modulation)
 
             ber_trials.append(compute_ber(bits_tx, bits_rx))
@@ -109,7 +144,15 @@ def plot_ber_vs_snr(
     ber_16qam: np.ndarray,
 ) -> None:
     is_multipath = config.channel_type.lower() == "multipath"
-    channel_label = "Multipath" if is_multipath else "AWGN"
+    eq = (getattr(config, "equalize", None) or "zf").lower() if is_multipath else ""
+    if is_multipath and eq == "none":
+        channel_label = "Multipath (no eq)"
+    elif is_multipath and eq:
+        channel_label = f"Multipath ({eq})"
+    elif is_multipath:
+        channel_label = "Multipath"
+    else:
+        channel_label = "AWGN"
     theory_qpsk = theoretical_ber(config.snr_range_db, "QPSK")
     theory_16qam = theoretical_ber(config.snr_range_db, "16QAM")
 
@@ -183,7 +226,7 @@ def plot_constellations(
         noisy = _apply_channel(ofdm_symbol, config, float(snr))
         base_no_cp = _after_channel_no_cp(noisy, config)
         freq_syms = fft_ofdm(base_no_cp)
-        freq_syms = _equalize_if_multipath(freq_syms, config)
+        freq_syms = _equalize(freq_syms, config, float(snr))
 
         plt.subplot(1, len(snr_list), idx + 1)
         plt.scatter(
@@ -198,7 +241,16 @@ def plot_constellations(
         plt.grid(True)
         plt.axis("equal")
 
-    channel_label = "Multipath" if config.channel_type.lower() == "multipath" else "AWGN"
+    is_mp = config.channel_type.lower() == "multipath"
+    eq = (getattr(config, "equalize", None) or "zf").lower() if is_mp else ""
+    if is_mp and eq == "none":
+        channel_label = "Multipath (no eq)"
+    elif is_mp and eq:
+        channel_label = f"Multipath ({eq})"
+    elif is_mp:
+        channel_label = "Multipath"
+    else:
+        channel_label = "AWGN"
     plt.suptitle(
         f"{modulation} Constellation ({channel_label}) — {config.num_symbols} symbols, "
         f"FFT={config.fft_size}, CP={config.cp_len}"
@@ -278,7 +330,8 @@ def main(config: Optional[SimulationConfig] = None) -> None:
         print(f"Random seed: {cfg.random_seed}")
 
     ch_label = cfg.channel_type.lower()
-    print(f"BER simulation: {cfg.num_symbols} symbols, {cfg.monte_carlo_trials} trials, channel={ch_label}")
+    eq_label = getattr(cfg, "equalize", "zf") or "zf"
+    print(f"BER simulation: {cfg.num_symbols} symbols, {cfg.monte_carlo_trials} trials, channel={ch_label}, equalize={eq_label}")
     ber_qpsk = simulate_ber_monte_carlo("QPSK", cfg)
     ber_16qam = simulate_ber_monte_carlo("16QAM", cfg)
 
@@ -301,18 +354,14 @@ if __name__ == "__main__":
     parser.add_argument("--trials", type=int, default=50, help="Monte Carlo trials per SNR")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--no-seed", action="store_true", help="No seed")
-    parser.add_argument(
-        "--channel",
-        type=str,
-        default="awgn",
-        choices=("awgn", "multipath"),
-        help="Channel: awgn or multipath (default: awgn)",
-    )
+    parser.add_argument("--channel", type=str, default="awgn", choices=("awgn", "multipath"), help="Channel type")
+    parser.add_argument("--equalize", type=str, default="zf", choices=("none", "zf", "mmse"), help="Equalizer for multipath: none, zf, or mmse")
     args = parser.parse_args()
     config = SimulationConfig(
         num_symbols=args.symbols,
         monte_carlo_trials=args.trials,
         random_seed=None if args.no_seed else args.seed,
         channel_type=args.channel,
+        equalize=args.equalize,
     )
     main(config)
