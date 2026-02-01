@@ -176,4 +176,4 @@ MIT License.
 
 ## Notes
 
-OFDM PHY-layer simulation. Mathematical details: `docs/ofdm_overview.md`.
+OFDM PHY-layer simulation. Mathematical details: `docs/ofdm_overview.md`. Lessons learned, limitations, and future work: `docs/LESSONS_LEARNED.md`. Implementation plan and next phase (EVM, pilots, CFO, STO): `docs/IMPLEMENTATION_PLAN.md`.
