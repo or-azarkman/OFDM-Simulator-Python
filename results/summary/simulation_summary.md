@@ -1,18 +1,20 @@
 # OFDM Simulation – Results Summary
 
 ## Simulation Configuration
-The OFDM system was evaluated under identical conditions using two different simulation lengths in order to assess performance stability and modulation sensitivity.
+The OFDM system was evaluated under identical conditions using two different simulation lengths and two channel types: AWGN and multipath (with one-tap ZF equalization).
 
 **Common parameters:**
 - Modulation schemes: QPSK, 16-QAM (Gray-coded)
-- Channel model: AWGN (complex baseband)
-- Receiver: Ideal synchronization (no CFO / timing offset)
+- Channel models: **AWGN** (complex baseband) and **multipath** (FIR taps, circular convolution, one-tap ZF equalization)
+- Receiver: Ideal synchronization (no CFO / timing offset); for multipath, ZF equalization after FFT
 - Evaluation metric: Bit Error Rate (BER)
-- **Validation:** Theoretical BER curves (QPSK, 16-QAM in AWGN) are plotted alongside simulated BER; close agreement validates the implementation.
+- **Validation:** Theoretical BER curves (QPSK, 16-QAM in AWGN) are plotted alongside simulated BER; multipath BER decreases with SNR when ZF is applied.
 
 **Simulation lengths:**
 - 500 OFDM symbols
 - 5000 OFDM symbols
+
+**Outputs:** `results/<N>_symbols/` (AWGN) and `results/<N>_symbols_multipath/` (multipath): BER vs SNR plots, constellation diagrams, CSV; multipath runs also include CIR/CFR (channel response) plots.
 
 ---
 
@@ -68,5 +70,4 @@ Key observations:
 ---
 
 ## Notes
-These results reflect an ideal OFDM PHY layer without synchronization errors, fading, or channel estimation imperfections.  
-Future simulations should include multipath channels and synchronization impairments to approach real-world behavior.
+These results reflect an OFDM PHY layer with AWGN and multipath (with ZF equalization). Multipath uses circular convolution and one-tap ZF so BER improves with SNR. Not included: synchronization (CFO, timing), pilot-based channel estimation, FEC.

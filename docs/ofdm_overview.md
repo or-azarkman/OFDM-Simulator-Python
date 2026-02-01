@@ -83,10 +83,19 @@ $$
 
 ## Receiver Processing
 
-1. **Cyclic Prefix Removal** – remove the CP from each OFDM symbol  
-2. **FFT** – recover frequency-domain subcarrier symbols  
-3. **Demodulation** – according to the selected modulation (QPSK / 16-QAM)  
-4. **BER Calculation** – compare received bits with transmitted bits
+1. **Cyclic Prefix Removal** – remove the CP from each OFDM symbol (for AWGN); for multipath the channel output is already the useful part without CP.  
+2. **FFT** – recover frequency-domain subcarrier symbols \(Y_k\).  
+3. **Equalization (multipath only)** – one-tap ZF: \(\hat{X}_k = Y_k / H_k\) so that after equalization the effective model is \(\hat{X}_k = X_k + N_k/H_k\).  
+4. **Demodulation** – according to the selected modulation (QPSK / 16-QAM).  
+5. **BER Calculation** – compare received bits with transmitted bits.
+
+---
+
+## Channel Models
+
+**AWGN:** Additive White Gaussian Noise; noise power set from SNR (Es/N0). Used as baseline.
+
+**Multipath (frequency-selective):** FIR impulse response \(h[n]\) (taps) plus AWGN. Per OFDM symbol we apply **circular convolution** of the useful part (after removing the cyclic prefix) with the taps, then AWGN. This matches the real OFDM behaviour where, after CP removal, the effective channel is circular convolution in time, so in frequency domain \(Y_k = H_k X_k + N_k\). The receiver applies **one-tap ZF equalization** (\(Y_k / H_k\)) so that BER improves with SNR. Taps are normalized to unit energy; default taps: direct path + delayed path (e.g. \([1, 0, 0.4 e^{j0.5}]\)). Outputs include CIR and CFR plots.
 
 ---
 
@@ -100,46 +109,36 @@ $$
 | OFDM symbols per run    | 500 / 5000     | Performance comparison                  |
 | Monte-Carlo trials      | 50             | BER averaging                            |
 | SNR range               | 0–20 dB        | Step of 2 dB                             |
+| Channel                 | AWGN / multipath | Selectable via config or `--channel`   |
 
 ---
 
 ## Simulation Scope
 
 ### Included
-- Random bitstream generation  
-- QPSK and 16-QAM modulation  
-- OFDM modulation/demodulation (IFFT/FFT)  
-- Cyclic prefix insertion/removal  
-- AWGN channel  
-- BER computation  
-- Constellation and BER plots
+- Random bitstream generation; QPSK and 16-QAM (Gray); OFDM IFFT/FFT; cyclic prefix
+- AWGN and multipath (circular convolution + AWGN) channel models; one-tap ZF equalization for multipath
+- BER computation; constellation and BER vs SNR plots; CIR and CFR plots for multipath
+- Theoretical BER curves (AWGN); CSV results per run
 
 ### Not Included
-- Synchronization (CFO, timing offset)  
-- Multipath fading channels  
-- Channel estimation / equalization  
-- FEC or RF/SDR implementation
-
-**Channel Model:**  
-Additive White Gaussian Noise (AWGN) is added to the transmitted complex baseband signal based on the specified SNR.
+- Synchronization (CFO, timing offset); blind or pilot-based channel estimation; FEC; RF/SDR
 
 ---
 
 ## Key Outputs
 
-- Constellation diagrams at selected SNRs  
-- BER vs SNR performance curves  
-- CSV files containing averaged BER results for 500 and 5000 symbols  
+- Constellation diagrams at selected SNRs (AWGN and multipath)
+- BER vs SNR curves (simulated; theoretical for AWGN)
+- CIR and CFR plots for multipath runs
+- CSV files: BER vs SNR for 500 and 5000 symbols (per channel type)
 
 ---
 
 ## Future Extensions
 
-- Frequency-selective multipath channels  
-- Channel estimation and equalization  
-- Carrier Frequency Offset (CFO) and timing offset modeling  
-- Higher-order modulation schemes (64-QAM, 256-QAM)  
-- Optional SDR-based real-time implementation  
+- Pilot-based channel estimation (simulation currently uses known channel for ZF equalization)
+- CFO and timing offset; higher-order modulation (64-QAM); FEC; SDR  
 
 ---
 

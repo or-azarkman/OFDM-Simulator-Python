@@ -26,11 +26,13 @@ if __name__ == "__main__":
     parser.add_argument("--symbols", type=int, default=5000, help="OFDM symbols")
     parser.add_argument("--trials", type=int, default=50, help="Monte Carlo trials")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument("--no-seed", action="store_true", help="No seed (non-reproducible)")
+    parser.add_argument("--no-seed", action="store_true", help="No seed")
+    parser.add_argument("--channel", type=str, default="awgn", choices=("awgn", "multipath"), help="awgn or multipath")
     args = parser.parse_args()
     config = SimulationConfig(
         num_symbols=args.symbols,
         monte_carlo_trials=args.trials,
         random_seed=None if args.no_seed else args.seed,
+        channel_type=args.channel,
     )
     main(config)

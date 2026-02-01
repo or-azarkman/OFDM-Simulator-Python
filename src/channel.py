@@ -2,15 +2,13 @@
 channel.py
 
 Channel models for OFDM system simulation:
-- Additive White Gaussian Noise (AWGN) channel model
-
-This module defines functions that model the transmission channel
-impairments in baseband OFDM systems. It can be extended later
-to include multipath fading, Doppler effects, and other real
-wireless channel models.
+- AWGN (Additive White Gaussian Noise)
+- Multipath (frequency-selective fading via FIR taps + AWGN)
 """
 
 import numpy as np
+from typing import Union, Sequence
+
 
 def awgn_channel(
     signal: np.ndarray,
@@ -49,5 +47,49 @@ def awgn_channel(
         1j * np.random.randn(*signal.shape)
     )
 
-    # Add noise to original signal
     return signal + noise
+
+
+def multipath_channel(
+    signal: np.ndarray,
+    taps: Union[Sequence[complex], np.ndarray],
+    snr_db: float,
+    cp_len: int = 0,
+) -> np.ndarray:
+    """
+    Frequency-selective channel for OFDM: circular convolution of the useful
+    part (after CP) of each symbol with the impulse response (taps), then AWGN.
+
+    In OFDM, after removing the cyclic prefix the effective channel is
+    circular convolution in time, so in frequency domain Y_k = H_k * X_k + N_k.
+    This preserves the per-subcarrier flat-fading model and allows BER to
+    improve with SNR when equalization is applied (or when H_k is mild).
+
+    Signal is (n_symbols, n_samples) with n_samples = N + cp_len per symbol.
+    Output is (n_symbols, N), i.e. symbols without CP (receiver must not
+    remove CP again when using this channel).
+
+    Taps are normalized to unit energy so SNR refers to the faded signal.
+    """
+    taps = np.asarray(taps, dtype=complex)
+    taps = taps / np.sqrt(np.sum(np.abs(taps) ** 2))
+    if signal.ndim == 1:
+        signal = signal.reshape(1, -1)
+        squeeze = True
+    else:
+        squeeze = False
+    n_sym, full_len = signal.shape
+    n_fft = full_len - cp_len
+    if n_fft <= 0:
+        raise ValueError("cp_len must be less than symbol length (samples per row).")
+    # Zero-pad taps to FFT length for circular convolution
+    h_pad = np.zeros(n_fft, dtype=complex)
+    h_pad[: len(taps)] = taps
+    H = np.fft.fft(h_pad)
+    out = np.zeros((n_sym, n_fft), dtype=complex)
+    for i in range(n_sym):
+        useful = signal[i, cp_len:]
+        out[i] = np.fft.ifft(np.fft.fft(useful) * H)
+    if squeeze:
+        out = out.flatten()
+    return awgn_channel(out, snr_db)
