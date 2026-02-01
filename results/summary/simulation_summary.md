@@ -37,13 +37,13 @@ The OFDM system was evaluated under identical conditions using two simulation le
 
 ### QPSK
 - Constellation points remain well separated under AWGN.
-- Even at moderate SNR values, symbol clustering is tight.
-- Decision regions are robust, resulting in low BER.
+- At 10 dB and above, symbol clustering is tight and decision regions are clear; BER drops sharply.
+- Under multipath without equalization, points spread into rings at high SNR; ZF/MMSE restores tight clusters.
 
 ### 16-QAM
-- Higher constellation density leads to increased sensitivity to noise.
-- At lower SNRs, visible symbol spreading causes decision ambiguity.
-- Requires higher SNR to achieve BER comparable to QPSK.
+- Higher constellation density leads to increased sensitivity to noise; at low SNR (0–6 dB) spreading is visible.
+- Requires higher SNR than QPSK for comparable BER; at 10–20 dB with equalization, clusters become well separated.
+- With 5000 symbols, constellation stability and BER curves are more reliable than with 500 symbols.
 
 Increasing the number of OFDM symbols significantly improves constellation stability and reduces visual noise dispersion.
 
@@ -81,22 +81,17 @@ Key observations:
 - QPSK is suitable for low-SNR or reliability-critical links.
 - 16-QAM provides higher throughput but demands better channel conditions.
 - Increasing the number of simulated symbols is essential for reliable BER analysis.
-- **Multipath:** Without equalization, multipath causes a high BER floor (especially visible for 16-QAM; QPSK may still improve with SNR). One-tap ZF or MMSE restores performance. ZF inverts the channel (noise amplification at nulls); MMSE balances channel inversion and noise (often better at low SNR). The comparison table and constellation grid (AWGN vs Multipath no eq vs ZF vs MMSE) illustrate the trade-offs.
+- **Multipath:** Without equalization, multipath causes a high BER floor (especially for 16-QAM); one-tap ZF or MMSE restores performance. ZF vs MMSE trade-off: see `docs/LESSONS_LEARNED.md`. The comparison table and constellation grid illustrate the scenarios.
 
 ---
 
 ## Outputs reference (plots and parameters)
 
-**Plots (per run):** `results/<run_dir>/images/` — BER vs SNR, constellation (QPSK, 16-QAM at 0/10/20 dB), CIR/CFR (multipath only).
+**Per-run:** `results/<run_dir>/images/` — BER vs SNR, constellation (QPSK, 16-QAM at 0/10/20 dB), CIR/CFR (multipath only).
 
-**Summary outputs (after `plot_ber_comparison.py` and `plot_constellation_comparison.py`):**
-- `results/summary/comparison_table.csv` (long format: SNR_dB, Scenario, Modulation, BER), `comparison_table.md` (4 tables), `comparison_table_readable.txt` (same 4 tables, plain text).
-- `results/summary/ber_comparison_awgn_vs_multipath_<N>symbols.png`, `ber_500_vs_5000_multipath_qpsk.png`, `ber_500_vs_5000_multipath_16qam.png`, `ber_comparison_zf_vs_mmse_<N>symbols.png`.
-- `results/summary/constellation_comparison_QPSK.png`, `constellation_comparison_16QAM.png` — 4×3 grid (scenarios × 0/10/20 dB).
+**Summary:** `results/summary/` — comparison table (CSV, MD, TXT), BER comparison plots (AWGN vs Multipath, 500 vs 5000, ZF vs MMSE), constellation comparison (4×3 grid). Key variables: `fft_size`, `cp_len`, `num_symbols`, `snr_range_db`, `monte_carlo_trials`, `channel_type`, `equalize`, `multipath_taps`.
 
-**Key variables:** `fft_size`, `cp_len`, `num_symbols`, `snr_range_db`, `monte_carlo_trials`, `channel_type`, `equalize`, `multipath_taps` (config); BER, SNR (dB); theoretical BER (AWGN).
-
-**Commands:** `py run_simulation.py`; `py run_simulation.py --channel multipath --equalize none|zf|mmse`; `py simulations/plot_ber_comparison.py` (includes table); `py simulations/plot_constellation_comparison.py`; `py -m pytest tests/ -v`.
+**Commands:** See `docs/RUN_AND_TEST.md`.
 
 ---
 

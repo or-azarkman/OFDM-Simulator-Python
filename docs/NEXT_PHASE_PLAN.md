@@ -1,6 +1,6 @@
 # Next Phase Plan — OFDM Simulator
 
-## 1. Status confirmation (IMPLEMENTATION_PLAN.md)
+## 1. Status confirmation
 
 | Step | Description | Status |
 |------|-------------|--------|
@@ -9,19 +9,19 @@
 | **2** | ZF/MMSE equalizer | **Done** |
 | **3** | Simulation scripts (--channel, --equalize) | **Done** |
 | **4** | Config + docs | **Done** |
-| **5** | Lessons learned | **Not done** |
+| **5** | Lessons learned | **Done** (`docs/LESSONS_LEARNED.md`) |
 
-**You are correct:** steps 1, 2, and 3 (and 4) are complete. The only remaining item from the original plan is **Step 5: Lessons learned**.
+Steps 1–5 are complete. Next: **Phase B** optional extensions (EVM, pilots, CFO, STO) as in the table below.
 
 ---
 
 ## 2. Recommended order of work
 
-### Phase A: Step 5 — Lessons learned (quick win, high impact)
+### Phase A: Step 5 — Lessons learned (**done**)
 
 **Goal:** One short document that shows engineering reflection. No new code; strengthens the narrative for interviews.
 
-**Deliverable:** `docs/LESSONS_LEARNED.md` (or a section in README) with:
+**Deliverable:** `docs/LESSONS_LEARNED.md` — created. Contains:
 
 - **Lessons learned:** e.g. CP and circular convolution, BER vs spectral efficiency trade-off, why equalization matters in multipath, ZF vs MMSE (noise amplification at nulls vs noise-aware).
 - **Limitations:** e.g. ideal sync (no CFO/STO), known channel (no pilot-based estimation), no FEC.
@@ -55,9 +55,7 @@ Do not feel obliged to implement all of them; **EVM + Lessons learned** alone al
 
 ## 3. Concrete next steps (action list)
 
-1. **Create `docs/LESSONS_LEARNED.md`** (Step 5).  
-   - Branch: e.g. `feature/docs-lessons-learned` or commit on current branch.  
-   - Content: lessons learned, limitations, future work (including EVM, pilots, CFO, STO).
+1. **Step 5 done:** `docs/LESSONS_LEARNED.md` — lessons learned, limitations, future work (EVM, pilots, CFO, STO).
 
 2. **Optional — EVM:**  
    - Add `src/evm.py`: e.g. `compute_evm(received_symbols, transmitted_symbols)` (per symbol or average).  
@@ -68,20 +66,19 @@ Do not feel obliged to implement all of them; **EVM + Lessons learned** alone al
 3. **Optional — Pilots / CFO / STO:**  
    - Plan in small steps (e.g. pilots first, then CFO or STO).  
    - Keep existing tests passing; add tests for new functions.  
-   - Update IMPLEMENTATION_PLAN.md (or this doc) with “Phase C” when you start.
+   - Update this doc with progress when you start.
 
 ---
 
 ## 4. What to skip or defer
 
-- **Full SDR / real RF:** Out of scope for this repo; keep it baseband simulation.
-- **Full FEC chain:** High effort; mention as “future work” in Lessons learned unless you want a dedicated FEC step later.
-- **Too many modulations:** 64-QAM is optional; QPSK + 16-QAM is enough to show understanding.
+- **Full SDR / real RF:** Out of scope — this repo is baseband simulation only; no RF hardware or SDR.
+- **Full FEC chain:** High effort; list as “future work” in Lessons learned unless you add a dedicated FEC step.
+- **Too many modulations:** 64-QAM is optional; QPSK + 16-QAM already demonstrate the trade-off.
 
 ---
 
 ## 5. Summary
 
-- **Confirmed:** Steps 1–4 done; only Step 5 (Lessons learned) is left from the original plan.
-- **Next:** Do Step 5 (LESSONS_LEARNED.md). Then, if you want to extend: EVM first, then pilots, then CFO/STO as time allows.
-- **Interview narrative:** “I built an OFDM sim with multipath and equalization, validated with BER and constellations, then reflected on limitations and added EVM / pilots / sync as next steps.” That is a strong, coherent story for a grad with no industry experience.
+- **Status:** Steps 1–5 complete. Next: Phase B optional extensions — EVM first, then pilots, then CFO/STO as time allows.
+- **Interview narrative:** “I built an OFDM sim with multipath and equalization, validated with BER and constellations, wrote lessons learned, and plan to add EVM / pilots / sync as next steps.” Strong, coherent story for a grad with no industry experience.

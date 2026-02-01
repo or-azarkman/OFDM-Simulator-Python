@@ -1,8 +1,13 @@
 # Running simulations and tests
 
-## Simulations (multipath)
+## Simulations
 
-**500 symbols (quick run):**
+**Default (AWGN):**
+```
+py run_simulation.py
+```
+
+**Multipath — 500 symbols (quick run):**
 ```
 py run_simulation.py --channel multipath --symbols 500
 ```
