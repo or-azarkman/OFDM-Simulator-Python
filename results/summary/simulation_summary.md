@@ -8,6 +8,7 @@ The OFDM system was evaluated under identical conditions using two different sim
 - Channel model: AWGN (complex baseband)
 - Receiver: Ideal synchronization (no CFO / timing offset)
 - Evaluation metric: Bit Error Rate (BER)
+- **Validation:** Theoretical BER curves (QPSK, 16-QAM in AWGN) are plotted alongside simulated BER; close agreement validates the implementation.
 
 **Simulation lengths:**
 - 500 OFDM symbols

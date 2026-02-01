@@ -1,5 +1,3 @@
-# channel.py
-
 """
 channel.py
 
@@ -26,7 +24,7 @@ def awgn_channel(
     The AWGN channel model adds noise samples drawn from a zero‑mean
     Gaussian distribution to the input signal. AWGN is a basic channel
     impairment model widely used in communication theory and system
-    performance evaluation. :contentReference[oaicite:1]{index=1}
+    performance evaluation.
 
     Args:
         signal (np.ndarray): Complex baseband signal samples.

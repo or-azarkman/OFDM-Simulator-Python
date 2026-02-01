@@ -64,9 +64,9 @@ def qam16_modulate(bits: np.ndarray) -> np.ndarray:
     """
     Map bits to 16‑QAM symbols using Gray coding.
 
-    Each group of 4 bits maps to one complex symbol. Gray coding
+    Each group of 4 bits maps to one complex symbol.     Gray coding
     ensures adjacent constellation points differ by one bit,
-    improving BER performance in noisy channels. :contentReference[oaicite:1]{index=1}
+    improving BER performance in noisy channels.
 
     Args:
         bits (np.ndarray): 1D array of bits (length divisible by 4).
