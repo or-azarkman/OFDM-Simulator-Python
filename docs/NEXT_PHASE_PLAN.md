@@ -11,7 +11,7 @@
 | **4** | Config + docs | **Done** |
 | **5** | Lessons learned | **Done** (`docs/LESSONS_LEARNED.md`) |
 
-Steps 1–5 are complete. Next: **Phase B** optional extensions (EVM, pilots, CFO, STO) as in the table below.
+Steps 1–5 are complete. **EVM** (Phase B) is implemented. Remaining Phase B: pilots, CFO, STO as in the table below.
 
 ---
 
@@ -35,7 +35,7 @@ Steps 1–5 are complete. Next: **Phase B** optional extensions (EVM, pilots, CF
 
 | Extension | What it is | Fit for “grad, no experience” | Effort | Impact | Recommendation |
 |-----------|------------|--------------------------------|--------|--------|----------------|
-| **EVM** | Error Vector Magnitude — standard metric (3GPP, Wi-Fi) | Very good | Low | High | **Do first.** Easy to add from existing symbols; shows you know industry metrics. |
+| **EVM** | Error Vector Magnitude — standard metric (3GPP, Wi-Fi) | Very good | Low | High | **Done.** Implemented in `src/evm.py`; EVM vs SNR per run; comparison plots and table in `results/summary/`. |
 | **Pilots** | Pilot subcarriers + simple channel estimation | Very good | Medium | High | **Strong second.** Moves from “known channel” to “estimated channel”; very relevant to real systems. |
 | **CFO** | Carrier frequency offset + correction (e.g. phase rotation, correction loop) | Good | Medium | High | **Good third.** Clearly shows understanding of real-world impairments. |
 | **STO** | Symbol timing offset + coarse/fine sync | Good | Medium–High | High | **Good fourth.** Complements CFO; both are “synchronization” story. |
@@ -44,7 +44,7 @@ Steps 1–5 are complete. Next: **Phase B** optional extensions (EVM, pilots, CF
 
 **Suggested order for extensions:**
 
-1. **EVM** — compute and plot EVM vs SNR (and optionally vs scenario: AWGN, multipath, ZF, MMSE). Add to `results/summary/` and docs.
+1. ~~**EVM**~~ — **Done.** EVM vs SNR per run; comparison plots (AWGN vs Multipath, ZF vs MMSE, all scenarios) and table in `results/summary/`; `plot_evm_comparison.py`.
 2. **Pilots** — insert pilots in frequency grid, estimate channel from pilots (e.g. LS), use estimated H in ZF/MMSE. Enables “unknown channel” scenario.
 3. **CFO** — add phase drift per sample (e.g. `exp(j*2*pi*delta_f*n)`), then correct (e.g. correlation with known preamble or pilots). Document as “sync impairment + correction.”
 4. **STO** — model delay (shift), then detect/estimate and correct (e.g. correlation with CP or preamble). Document alongside CFO.

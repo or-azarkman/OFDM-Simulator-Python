@@ -26,8 +26,15 @@ from src.receiver import (
 from src.channel import awgn_channel, multipath_channel
 from src.theory import theoretical_ber
 from src.equalizers import equalize_zf, equalize_mmse
+from src.evm import compute_evm
 
 CONFIG = SimulationConfig()
+
+
+def get_tx_freq_symbols_from_stream(ofdm_stream: np.ndarray, config: SimulationConfig) -> np.ndarray:
+    """Return transmitted frequency-domain symbols (no channel) from OFDM stream with CP."""
+    ofdm_no_cp = remove_cyclic_prefix(ofdm_stream, config.cp_len)
+    return fft_ofdm(ofdm_no_cp)
 
 
 def _apply_channel(stream: np.ndarray, config: SimulationConfig, snr_db: float) -> np.ndarray:
@@ -136,6 +143,115 @@ def simulate_ber_monte_carlo(
         ber_avg.append(avg_ber)
 
     return np.array(ber_avg)
+
+
+def simulate_evm(
+    modulation: str,
+    config: SimulationConfig,
+    evm_trials: Optional[int] = None,
+) -> np.ndarray:
+    """
+    Run EVM simulation: for each SNR, average EVM over trials (same bits → tx → channel → rx).
+
+    Returns:
+        Array of average EVM (%) at each SNR point.
+    """
+    trials = evm_trials if evm_trials is not None else min(30, config.monte_carlo_trials)
+    bits_per_sub = 2 if modulation.upper() == "QPSK" else 4
+    evm_avg = []
+
+    for snr_db in config.snr_range_db:
+        evm_trial_list = []
+        for _ in range(trials):
+            total_bits = config.num_symbols * config.fft_size * bits_per_sub
+            bits_tx = generate_random_bits(total_bits)
+            ofdm_stream = generate_ofdm_stream(
+                bits_tx, config.fft_size, config.cp_len, modulation
+            )
+            tx_freq = get_tx_freq_symbols_from_stream(ofdm_stream, config)
+            rx_freq = get_freq_symbols_from_stream(ofdm_stream, config, float(snr_db))
+            tx_flat = tx_freq.flatten()
+            rx_flat = rx_freq.flatten()
+            evm_trial_list.append(compute_evm(rx_flat, tx_flat, percent=True))
+        evm_avg.append(np.mean(evm_trial_list))
+        print(f"  EVM {modulation} @ {snr_db} dB → avg EVM = {evm_avg[-1]:.2f}%")
+
+    return np.array(evm_avg)
+
+
+def plot_evm_vs_snr(
+    config: SimulationConfig,
+    evm_qpsk: np.ndarray,
+    evm_16qam: np.ndarray,
+) -> None:
+    """Plot EVM (%) vs SNR and save to run directory."""
+    is_multipath = config.channel_type.lower() == "multipath"
+    eq = (getattr(config, "equalize", None) or "zf").lower() if is_multipath else ""
+    if is_multipath and eq == "none":
+        channel_label = "Multipath (no eq)"
+    elif is_multipath and eq:
+        channel_label = f"Multipath ({eq})"
+    elif is_multipath:
+        channel_label = "Multipath"
+    else:
+        channel_label = "AWGN"
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.plot(
+        config.snr_range_db,
+        evm_qpsk,
+        "o-",
+        label="QPSK",
+        color="C0",
+        markersize=6,
+    )
+    ax.plot(
+        config.snr_range_db,
+        evm_16qam,
+        "s-",
+        label="16-QAM",
+        color="C1",
+        markersize=6,
+    )
+    ax.set_xlabel("SNR (dB)")
+    ax.set_ylabel("EVM (%)")
+    ax.set_title(
+        f"EVM vs SNR — OFDM {channel_label}\n"
+        f"Symbols={config.num_symbols}, FFT={config.fft_size}, CP={config.cp_len}"
+    )
+    ax.legend(loc="upper right")
+    ax.grid(True, alpha=0.3)
+    suffix = "_multipath" if is_multipath else ""
+    out_path = config.images_dir / f"evm_vs_snr_{config.num_symbols}symbols{suffix}.png"
+    fig.savefig(out_path, dpi=300)
+    plt.close(fig)
+    print(f"Saved: {out_path}")
+
+
+def save_evm_csv(
+    config: SimulationConfig,
+    evm_qpsk: np.ndarray,
+    evm_16qam: np.ndarray,
+) -> None:
+    """Save EVM vs SNR to CSV in run directory."""
+    snr_int = config.snr_range_db.astype(int)
+    suffix = "_multipath" if config.channel_type.lower() == "multipath" else ""
+    np.savetxt(
+        config.run_dir / f"evm_vs_snr_{config.num_symbols}symbols{suffix}_qpsk.csv",
+        np.column_stack((snr_int, evm_qpsk)),
+        delimiter=",",
+        header="SNR_dB,EVM_pct",
+        comments="",
+        fmt=["%d", "%.4f"],
+    )
+    np.savetxt(
+        config.run_dir / f"evm_vs_snr_{config.num_symbols}symbols{suffix}_16qam.csv",
+        np.column_stack((snr_int, evm_16qam)),
+        delimiter=",",
+        header="SNR_dB,EVM_pct",
+        comments="",
+        fmt=["%d", "%.4f"],
+    )
+    print(f"Saved EVM CSV files in {config.run_dir}")
 
 
 def plot_ber_vs_snr(
@@ -343,6 +459,12 @@ def main(config: Optional[SimulationConfig] = None) -> None:
     print("Constellation plots...")
     plot_constellations("QPSK", cfg, snr_list=(0, 10, 20))
     plot_constellations("16QAM", cfg, snr_list=(0, 10, 20))
+
+    print("EVM simulation...")
+    evm_qpsk = simulate_evm("QPSK", cfg)
+    evm_16qam = simulate_evm("16QAM", cfg)
+    plot_evm_vs_snr(cfg, evm_qpsk, evm_16qam)
+    save_evm_csv(cfg, evm_qpsk, evm_16qam)
 
     print("Done.")
 

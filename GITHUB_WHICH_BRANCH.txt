@@ -1,0 +1,38 @@
+================================================================================
+  ON GITHUB — WHERE TO SEE THE LATEST DOCS
+================================================================================
+
+The latest docs (NEXT_PHASE_PLAN with Step 5 = Done, no INTERVIEWER_EVALUATION)
+are on branch:  feature/docs-lessons-learned
+
+On GitHub you MUST select this branch:
+  1. Open: https://github.com/or-azarkman/OFDM-Simulator-Python
+  2. Click the branch dropdown (it may say "main")
+  3. Select:  feature/docs-lessons-learned
+  4. Now open docs/NEXT_PHASE_PLAN.md — you will see Step 5 = Done
+  5. In docs/ folder — INTERVIEWER_EVALUATION.md should NOT be there (after you run the commands below and push)
+
+If you stay on "main" you will ALWAYS see the OLD version (Step 5 not done, INTERVIEWER_EVALUATION there).
+Main updates ONLY when you merge the Pull Request (feature/docs-lessons-learned → main) on GitHub.
+
+================================================================================
+  COMMANDS TO RUN LOCALLY (copy all, then run one block at a time)
+================================================================================
+
+cd "C:\Users\oraza\OneDrive\שולחן העבודה\OFDM-Simulator-Python-1"
+
+git checkout feature/docs-lessons-learned
+
+git rm --cached docs/INTERVIEWER_EVALUATION.md
+
+git add -A
+
+git status
+
+git commit -m "Remove INTERVIEWER_EVALUATION from repo; ensure NEXT_PHASE_PLAN Step 5 Done is pushed"
+
+git push origin feature/docs-lessons-learned
+
+================================================================================
+After push: On GitHub select branch feature/docs-lessons-learned and verify.
+================================================================================
