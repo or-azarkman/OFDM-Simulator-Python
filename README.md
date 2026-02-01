@@ -33,7 +33,7 @@ py -m pytest tests/ -v
 
 **Linux/macOS** (if `python` or `python3` is in PATH): use `pip install -r requirements.txt`, `python run_simulation.py`, `pytest tests/ -v`.
 
-In Cursor: run `run_simulation.py` from the project root.
+From the project root: run `run_simulation.py`.
 
 Results: `results/5000_symbols/` (AWGN), `results/5000_symbols_multipath_zf/` or `_mmse/` (multipath); each has `images/` and CSV. Comparison: `py simulations/plot_ber_comparison.py` (BER plots + table), `py simulations/plot_constellation_comparison.py` (4×3 constellation grid). Commands: `docs/RUN_AND_TEST.md`.
 
@@ -62,7 +62,7 @@ OFDM is the foundation of modern wireless PHY layers:
 | LTE / 5G  | Downlink / uplink  |
 | DVB-T     | Digital TV         |
 
-By splitting bandwidth into orthogonal subcarriers and using **IFFT/FFT**, OFDM achieves high spectral efficiency and robustness to multipath. This project demonstrates the full chain at **complex baseband** (no RF).
+By splitting bandwidth into orthogonal subcarriers and using **IFFT/FFT**, OFDM achieves high spectral efficiency and robustness to multipath. This project demonstrates the full chain at **complex baseband** (no RF); all processing is baseband-only, with no RF front-end or SDR.
 
 ---
 
@@ -139,7 +139,7 @@ Results: `results/<N>_symbols/` (AWGN), `results/<N>_symbols_multipath_zf/` or `
 
 ## Key concepts
 
-Baseband chain: bits → modulation → IFFT → CP; receiver: CP removal → FFT → ZF/MMSE equalization (multipath) → demod → BER. CP enables circular convolution and one-tap equalization. Gray coding; theoretical BER (AWGN); tests cover transmitter, receiver, channel, theory, equalizers.
+Baseband chain: bits → modulation → IFFT → CP; receiver: CP removal → FFT → ZF/MMSE equalization (multipath) → demod → BER. CP enables circular convolution and one-tap equalization. Gray coding; theoretical BER (AWGN). Tests: transmitter, receiver, channel, theory, equalizers. For lessons learned and next-phase roadmap, see `docs/LESSONS_LEARNED.md` and `docs/NEXT_PHASE_PLAN.md`.
 
 ---
 
@@ -176,4 +176,4 @@ MIT License.
 
 ## Notes
 
-OFDM PHY-layer simulation. Mathematical details: `docs/ofdm_overview.md`. Lessons learned, limitations, and future work: `docs/LESSONS_LEARNED.md`. Implementation plan and next phase (EVM, pilots, CFO, STO): `docs/IMPLEMENTATION_PLAN.md`.
+OFDM PHY-layer simulation. Mathematical details: `docs/ofdm_overview.md`. Lessons learned, limitations, and future work: `docs/LESSONS_LEARNED.md`. Next phase (EVM, pilots, CFO, STO): `docs/NEXT_PHASE_PLAN.md`.

@@ -41,6 +41,8 @@ Thumbs.db
 
 # Internal / working docs (do not push to GitHub)
 docs/IMPLEMENTATION_PLAN.md
+docs/INTERVIEWER_EVALUATION.md
+docs/DOCUMENTATION_RATINGS.md
 
 # Local overrides (keep results in git for portfolio)
 # results/
