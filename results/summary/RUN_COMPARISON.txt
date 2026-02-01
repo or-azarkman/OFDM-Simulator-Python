@@ -1,0 +1,15 @@
+Regenerate summary outputs from project root:
+
+  py simulations/plot_ber_comparison.py
+  py simulations/plot_constellation_comparison.py
+
+Outputs in results/summary/:
+  constellation_comparison_QPSK.png
+  constellation_comparison_16QAM.png
+  ber_comparison_awgn_vs_multipath_5000symbols.png
+  ber_500_vs_5000_multipath_qpsk.png
+  ber_500_vs_5000_multipath_16qam.png
+  ber_comparison_zf_vs_mmse_5000symbols.png
+  comparison_table.csv
+  comparison_table.md
+  comparison_table_readable.txt

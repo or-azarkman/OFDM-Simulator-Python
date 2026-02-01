@@ -85,7 +85,7 @@ $$
 
 1. **Cyclic Prefix Removal** – remove the CP from each OFDM symbol (for AWGN); for multipath the channel output is already the useful part without CP.  
 2. **FFT** – recover frequency-domain subcarrier symbols \(Y_k\).  
-3. **Equalization (multipath only)** – one-tap ZF: \(\hat{X}_k = Y_k / H_k\) so that after equalization the effective model is \(\hat{X}_k = X_k + N_k/H_k\).  
+3. **Equalization (multipath only)** – one-tap ZF (\(\hat{X}_k = Y_k / H_k\)) or MMSE (\(W_k = H^*_k / (|H_k|^2 + 1/\mathrm{SNR})\)).  
 4. **Demodulation** – according to the selected modulation (QPSK / 16-QAM).  
 5. **BER Calculation** – compare received bits with transmitted bits.
 
@@ -95,21 +95,21 @@ $$
 
 **AWGN:** Additive White Gaussian Noise; noise power set from SNR (Es/N0). Used as baseline.
 
-**Multipath (frequency-selective):** FIR impulse response \(h[n]\) (taps) plus AWGN. Per OFDM symbol we apply **circular convolution** of the useful part (after removing the cyclic prefix) with the taps, then AWGN. This matches the real OFDM behaviour where, after CP removal, the effective channel is circular convolution in time, so in frequency domain \(Y_k = H_k X_k + N_k\). The receiver applies **one-tap ZF equalization** (\(Y_k / H_k\)) so that BER improves with SNR. Taps are normalized to unit energy; default taps: direct path + delayed path (e.g. \([1, 0, 0.4 e^{j0.5}]\)). Outputs include CIR and CFR plots.
+**Multipath (frequency-selective):** FIR impulse response \(h[n]\) (taps) plus AWGN. Per OFDM symbol we apply **circular convolution** of the useful part (after CP) with the taps, then AWGN; in frequency domain \(Y_k = H_k X_k + N_k\). The receiver can use **no equalization** (for baseline comparison), **one-tap ZF** (\(Y_k / H_k\)), or **one-tap MMSE** (\(W_k = H^*_k / (|H_k|^2 + 1/\mathrm{SNR})\)). Taps normalized to unit energy; default taps: \([1, 0, 0.4 e^{j0.5}]\). Outputs: CIR and CFR plots.
 
 ---
 
 ## Simulation Parameters
 
-| Parameter               | Value           | Notes                                   |
-|-------------------------|----------------|-----------------------------------------|
-| FFT size                | 64             | Number of subcarriers                   |
-| Cyclic Prefix length    | 16             | 25% of FFT size                         |
-| Modulation schemes      | QPSK / 16-QAM  | Gray-coded                              |
-| OFDM symbols per run    | 500 / 5000     | Performance comparison                  |
-| Monte-Carlo trials      | 50             | BER averaging                            |
-| SNR range               | 0–20 dB        | Step of 2 dB                             |
-| Channel                 | AWGN / multipath | Selectable via config or `--channel`   |
+|       Parameter         |     Value       |              Notes                      |
+|-------------------------|-----------------|-----------------------------------------|
+| FFT size                | 64              | Number of subcarriers                   |
+| Cyclic Prefix length    | 16              | 25% of FFT size                         |
+| Modulation schemes      | QPSK / 16-QAM   | Gray-coded                              |
+| OFDM symbols per run    | 500 / 5000      | Performance comparison                  |
+| Monte-Carlo trials      | 50              | BER averaging                           |
+| SNR range               | 0–20 dB         | Step of 2 dB                            |
+| Channel                 | AWGN / multipath| Selectable via config or `--channel`    |
 
 ---
 
@@ -117,9 +117,10 @@ $$
 
 ### Included
 - Random bitstream generation; QPSK and 16-QAM (Gray); OFDM IFFT/FFT; cyclic prefix
-- AWGN and multipath (circular convolution + AWGN) channel models; one-tap ZF equalization for multipath
+- AWGN and multipath (circular convolution + AWGN); multipath with **no equalizer**, **ZF**, or **MMSE** (`--equalize none|zf|mmse`)
 - BER computation; constellation and BER vs SNR plots; CIR and CFR plots for multipath
 - Theoretical BER curves (AWGN); CSV results per run
+- **Comparison outputs:** table (BER by scenario per SNR), BER comparison plots, constellation comparison grid (4×3)
 
 ### Not Included
 - Synchronization (CFO, timing offset); blind or pilot-based channel estimation; FEC; RF/SDR
@@ -128,10 +129,11 @@ $$
 
 ## Key Outputs
 
-- Constellation diagrams at selected SNRs (AWGN and multipath)
-- BER vs SNR curves (simulated; theoretical for AWGN)
-- CIR and CFR plots for multipath runs
-- CSV files: BER vs SNR for 500 and 5000 symbols (per channel type)
+- **Per-run:** Constellation diagrams at 0, 10, 20 dB (AWGN and multipath); BER vs SNR curves (simulated; theoretical for AWGN); CIR and CFR plots for multipath; CSV: BER vs SNR per modulation.
+- **Summary (after running comparison scripts):**
+  - **Comparison table** (`results/summary/comparison_table.csv`, `.md`): BER per SNR for AWGN, Multipath (no eq), Multipath ZF, Multipath MMSE (QPSK and 16-QAM). Generated by `plot_ber_comparison.py`. For "Multipath no eq" run once: `run_simulation.py --channel multipath --equalize none --symbols 5000`.
+  - **BER comparison plots** (`results/summary/`): AWGN vs Multipath (ZF); 500 vs 5000 symbols; ZF vs MMSE.
+  - **Constellation comparison** (`results/summary/constellation_comparison_QPSK.png`, `constellation_comparison_16QAM.png`): 4 columns (AWGN, Multipath no eq, ZF, MMSE) × 3 rows (0, 10, 20 dB), same signal for direct visual comparison. Generated by `plot_constellation_comparison.py`.
 
 ---
 

@@ -35,6 +35,7 @@ class SimulationConfig:
     random_seed: Optional[int] = 42
     results_dir: Path = field(default_factory=lambda: _project_root() / "results")
     channel_type: str = "awgn"
+    equalize: str = "zf"
     multipath_taps: Union[Sequence[complex], np.ndarray, None] = field(
         default_factory=_default_multipath_taps
     )
@@ -52,6 +53,11 @@ class SimulationConfig:
         base = f"{self.num_symbols}_symbols"
         if self.channel_type.lower() == "multipath":
             base = f"{base}_multipath"
+            eq = (self.equalize or "zf").lower()
+            if eq == "mmse":
+                base = f"{base}_mmse"
+            elif eq == "zf":
+                base = f"{base}_zf"
         return self.results_dir / base
 
     @property

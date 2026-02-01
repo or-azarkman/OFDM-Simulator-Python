@@ -39,7 +39,7 @@ Thumbs.db
 .ipynb_checkpoints/
 *.ipynb
 
-# Internal / working docs (not for repo)
+# Internal / working docs (do not push to GitHub)
 docs/IMPLEMENTATION_PLAN.md
 
 # Local overrides (keep results in git for portfolio)
