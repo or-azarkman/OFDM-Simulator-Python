@@ -1,4 +1,4 @@
-"""Run OFDM BER simulation from project root. Sets cwd and path then calls main(config)."""
+"""Run OFDM BER and EVM simulation from project root. Sets cwd and path then calls main(config)."""
 
 import os
 import sys

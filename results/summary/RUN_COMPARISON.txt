@@ -2,6 +2,7 @@ Regenerate summary outputs from project root:
 
   py simulations/plot_ber_comparison.py
   py simulations/plot_constellation_comparison.py
+  py simulations/plot_evm_comparison.py
 
 Outputs in results/summary/:
   constellation_comparison_QPSK.png
@@ -13,3 +14,9 @@ Outputs in results/summary/:
   comparison_table.csv
   comparison_table.md
   comparison_table_readable.txt
+  evm_comparison_awgn_vs_multipath_5000symbols.png
+  evm_comparison_zf_vs_mmse_5000symbols.png
+  evm_comparison_all_scenarios_qpsk_5000symbols.png
+  evm_comparison_all_scenarios_16qam_5000symbols.png
+  evm_comparison_table.csv
+  evm_comparison_table.md

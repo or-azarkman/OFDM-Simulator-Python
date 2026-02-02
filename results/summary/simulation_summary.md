@@ -7,18 +7,23 @@ The OFDM system was evaluated under identical conditions using two simulation le
 - Modulation schemes: QPSK, 16-QAM (Gray-coded)
 - Channel models: **AWGN** (complex baseband) and **multipath** (FIR taps, circular convolution; optional no eq, ZF, or MMSE equalization)
 - Receiver: Ideal synchronization (no CFO / timing offset); for multipath, no equalizer, ZF, or MMSE after FFT (`src/equalizers.py`); config: `--equalize none|zf|mmse`
-- Evaluation metric: Bit Error Rate (BER)
-- **Validation:** Theoretical BER curves (QPSK, 16-QAM in AWGN) alongside simulated BER; multipath BER decreases with SNR when ZF or MMSE is applied.
+- Evaluation metrics: Bit Error Rate (BER) and Error Vector Magnitude (EVM)
+- **Validation:** Theoretical BER curves (QPSK, 16-QAM in AWGN) alongside simulated BER; multipath BER decreases with SNR when ZF or MMSE is applied. EVM quantifies symbol-level accuracy and complements BER analysis.
 
 **Simulation lengths:**
 - 500 OFDM symbols
 - 5000 OFDM symbols
 
 **Outputs:**
-- AWGN: `results/<N>_symbols/` — BER vs SNR, constellation, CSV.
-- Multipath: `results/<N>_symbols_multipath_zf/` or `results/<N>_symbols_multipath_mmse/` — BER vs SNR, constellation, CIR/CFR plots, CSV.
-- **Comparison plots (run after simulations):** `py simulations/plot_ber_comparison.py` → `results/summary/`: AWGN vs Multipath (ZF), 500 vs 5000 symbols (multipath), ZF vs MMSE.
-- **Comparison table:** same script → `comparison_table.csv` and `comparison_table.md` with BER per SNR for AWGN, Multipath (no eq), ZF, MMSE (QPSK and 16-QAM). For "Multipath no eq" run once: `py run_simulation.py --channel multipath --equalize none --symbols 5000`.
+- AWGN: `results/<N>_symbols/` — BER vs SNR, EVM vs SNR, constellation, CSV (BER + EVM).
+- Multipath: `results/<N>_symbols_multipath_zf/` or `results/<N>_symbols_multipath_mmse/` — BER vs SNR, EVM vs SNR, constellation, CIR/CFR plots, CSV (BER + EVM).
+- **Comparison plots (run after simulations):** 
+  - `py simulations/plot_ber_comparison.py` → `results/summary/`: BER plots (AWGN vs Multipath, 500 vs 5000, ZF vs MMSE).
+  - `py simulations/plot_evm_comparison.py` → `results/summary/`: EVM plots (AWGN vs Multipath, ZF vs MMSE, all scenarios).
+- **Comparison tables:** 
+  - `plot_ber_comparison.py` → `comparison_table.csv` and `comparison_table.md` with BER per SNR for AWGN, Multipath (no eq), ZF, MMSE (QPSK and 16-QAM).
+  - `plot_evm_comparison.py` → `evm_comparison_table.csv` and `evm_comparison_table.md` with EVM (%) per SNR for all scenarios.
+  - For "Multipath no eq" run once: `py run_simulation.py --channel multipath --equalize none --symbols 5000`.
 - **Constellation comparison:** `py simulations/plot_constellation_comparison.py` → `constellation_comparison_QPSK.png`, `constellation_comparison_16QAM.png`: 4 columns (AWGN, Multipath no eq, ZF, MMSE) × 3 rows (0, 10, 20 dB), same signal for direct visual comparison.
 
 ---
@@ -49,7 +54,7 @@ Increasing the number of OFDM symbols significantly improves constellation stabi
 
 ---
 
-## BER Performance Comparison
+## BER and EVM Performance Comparison
 
 | Modulation | Noise Robustness | Spectral Efficiency | BER Stability |
 |-----------|------------------|---------------------|---------------|
@@ -60,6 +65,7 @@ Key observations:
 - QPSK consistently achieves lower BER at a given SNR.
 - 16-QAM shows higher BER variance, especially with fewer symbols.
 - BER curves become smoother and more reliable when using 5000 symbols compared to 500 symbols.
+- **EVM:** Lower EVM indicates better symbol accuracy. AWGN shows decreasing EVM with SNR (e.g., ~10% at 20 dB). Multipath without equalization shows high EVM floor; ZF and MMSE reduce EVM, with MMSE typically outperforming ZF at low SNR due to noise-aware equalization.
 
 ---
 
@@ -87,13 +93,13 @@ Key observations:
 
 ## Outputs reference (plots and parameters)
 
-**Per-run:** `results/<run_dir>/images/` — BER vs SNR, constellation (QPSK, 16-QAM at 0/10/20 dB), CIR/CFR (multipath only).
+**Per-run:** `results/<run_dir>/images/` — BER vs SNR, EVM vs SNR, constellation (QPSK, 16-QAM at 0/10/20 dB), CIR/CFR (multipath only). CSV files: `ber_vs_snr_*.csv` and `evm_vs_snr_*.csv`.
 
-**Summary:** `results/summary/` — comparison table (CSV, MD, TXT), BER comparison plots (AWGN vs Multipath, 500 vs 5000, ZF vs MMSE), constellation comparison (4×3 grid). Key variables: `fft_size`, `cp_len`, `num_symbols`, `snr_range_db`, `monte_carlo_trials`, `channel_type`, `equalize`, `multipath_taps`.
+**Summary:** `results/summary/` — BER comparison table (CSV, MD, TXT), EVM comparison table (CSV, MD), BER comparison plots (AWGN vs Multipath, 500 vs 5000, ZF vs MMSE), EVM comparison plots (AWGN vs Multipath, ZF vs MMSE, all scenarios), constellation comparison (4×3 grid). Key variables: `fft_size`, `cp_len`, `num_symbols`, `snr_range_db`, `monte_carlo_trials`, `channel_type`, `equalize`, `multipath_taps`.
 
 **Commands:** See `docs/RUN_AND_TEST.md`.
 
 ---
 
 ## Notes
-These results reflect an OFDM PHY layer with AWGN and multipath (ZF or MMSE equalization). Multipath uses circular convolution and one-tap ZF/MMSE so BER improves with SNR. Equalizers: `src/equalizers.py` (ZF, MMSE); CLI: `--equalize none|zf|mmse`. Not included: synchronization (CFO, timing), pilot-based channel estimation, FEC.
+These results reflect an OFDM PHY layer with AWGN and multipath (ZF or MMSE equalization). Multipath uses circular convolution and one-tap ZF/MMSE so BER and EVM improve with SNR. Metrics: BER (`src/receiver.py`) and EVM (`src/evm.py`). Equalizers: `src/equalizers.py` (ZF, MMSE); CLI: `--equalize none|zf|mmse`. Not included: synchronization (CFO, timing), pilot-based channel estimation, FEC.
