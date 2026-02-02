@@ -6,13 +6,13 @@ Short reflection on what was learned, current limitations, and planned improveme
 
 ## Lessons learned
 
-- **Cyclic prefix and circular convolution:** The CP turns linear convolution with the channel into circular convolution in the useful part of the symbol. That preserves orthogonality between subcarriers and allows one-tap equalization in the frequency domain (Y_k = H_k X_k + N_k). Without CP, multipath would cause inter-symbol and inter-carrier interference.
+- **Cyclic prefix and circular convolution:** The CP turns linear convolution with the channel into circular convolution in the useful part of the symbol. That preserves orthogonality between subcarriers and allows one-tap equalization in the frequency domain ($Y_k = H_k X_k + N_k$). Without CP, multipath would cause inter-symbol and inter-carrier interference.
 
 - **BER vs spectral efficiency:** QPSK is more robust to noise (lower BER at the same SNR) but carries fewer bits per symbol. 16-QAM doubles the bit rate per symbol at the cost of higher BER for the same SNR. The comparison table and BER vs SNR plots make this trade-off visible across AWGN and multipath scenarios.
 
 - **Why equalization matters in multipath:** Without equalization, the frequency-selective channel distorts the constellation (amplitude and phase per subcarrier). BER stays high even when SNR increases (error floor), especially for 16-QAM. One-tap ZF or MMSE after FFT restores the constellation and brings BER down with SNR.
 
-- **ZF vs MMSE:** ZF inverts the channel (X̂_k = Y_k / H_k), which amplifies noise at subcarriers where |H_k| is small. MMSE balances channel inversion and noise (W_k = H*_k / (|H_k|² + 1/SNR)), often giving better BER at low SNR. The ZF vs MMSE comparison plots illustrate this.
+- **ZF vs MMSE:** ZF inverts the channel ($\hat{X}_k = Y_k / H_k$), which amplifies noise at subcarriers where $|H_k|$ is small. MMSE balances channel inversion and noise ($W_k = H^*_k / (|H_k|^2 + 1/\mathrm{SNR})$), often giving better BER at low SNR. The ZF vs MMSE comparison plots illustrate this.
 
 - **Validation:** Comparing simulated BER with theoretical BER (AWGN) and checking constellations at several SNRs helped catch scaling and indexing issues. The 4×3 constellation grid (scenarios × 0/10/20 dB) gives a clear visual comparison of AWGN, multipath without equalizer, ZF, and MMSE. EVM provides an additional validation metric that quantifies symbol-level accuracy independently of hard decisions.
 
@@ -38,7 +38,7 @@ In order of priority (see `docs/NEXT_PHASE_PLAN.md` for details):
 
 2. **Pilots and channel estimation:** Insert pilot subcarriers, estimate H from pilots (e.g. least-squares), use estimated H in ZF/MMSE. Moves from “known channel” to “estimated channel.”
 
-3. **CFO (Carrier frequency offset):** Model phase drift (e.g. exp(j·2π·Δf·n)), then correct using correlation with preamble or pilots. Document as a synchronization impairment and correction step.
+3. **CFO (Carrier frequency offset):** Model phase drift (e.g. $\exp(j \cdot 2\pi \cdot \Delta f \cdot n)$), then correct using correlation with preamble or pilots. Document as a synchronization impairment and correction step.
 
 4. **STO (Symbol timing offset):** Model symbol delay, then detect and correct (e.g. using CP or preamble correlation). Complements CFO in a “sync” story.
 

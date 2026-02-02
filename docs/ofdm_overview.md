@@ -84,8 +84,8 @@ $$
 ## Receiver Processing
 
 1. **Cyclic Prefix Removal** – remove the CP from each OFDM symbol (for AWGN); for multipath the channel output is already the useful part without CP.  
-2. **FFT** – recover frequency-domain subcarrier symbols \(Y_k\).  
-3. **Equalization (multipath only)** – one-tap ZF (\(\hat{X}_k = Y_k / H_k\)) or MMSE (\(W_k = H^*_k / (|H_k|^2 + 1/\mathrm{SNR})\)).  
+2. **FFT** – recover frequency-domain subcarrier symbols $Y_k$.  
+3. **Equalization (multipath only)** – one-tap ZF ($\hat{X}_k = Y_k / H_k$) or MMSE ($W_k = H^*_k / (|H_k|^2 + 1/\mathrm{SNR})$).  
 4. **Demodulation** – according to the selected modulation (QPSK / 16-QAM).  
 5. **BER Calculation** – compare received bits with transmitted bits.
 
@@ -95,7 +95,7 @@ $$
 
 **AWGN:** Additive White Gaussian Noise; noise power set from SNR (Es/N0). Used as baseline.
 
-**Multipath (frequency-selective):** FIR impulse response \(h[n]\) (taps) plus AWGN. Per OFDM symbol we apply **circular convolution** of the useful part (after CP) with the taps, then AWGN; in frequency domain \(Y_k = H_k X_k + N_k\). The receiver can use **no equalization** (for baseline comparison), **one-tap ZF** (\(Y_k / H_k\)), or **one-tap MMSE** (\(W_k = H^*_k / (|H_k|^2 + 1/\mathrm{SNR})\)). Taps normalized to unit energy; default taps: \([1, 0, 0.4 e^{j0.5}]\). Outputs: CIR and CFR plots.
+**Multipath (frequency-selective):** FIR impulse response $h[n]$ (taps) plus AWGN. Per OFDM symbol we apply **circular convolution** of the useful part (after CP) with the taps, then AWGN; in frequency domain $Y_k = H_k X_k + N_k$. The receiver can use **no equalization** (for baseline comparison), **one-tap ZF** ($Y_k / H_k$), or **one-tap MMSE** ($W_k = H^*_k / (|H_k|^2 + 1/\mathrm{SNR})$). Taps normalized to unit energy; default taps: $[1, 0, 0.4 e^{j0.5}]$. Outputs: CIR and CFR plots.
 
 ---
 
@@ -103,11 +103,11 @@ $$
 
 **EVM** measures the deviation of received (equalized) constellation points from the transmitted reference, normalized by the reference power:
 
-\[
+$$
 \mathrm{EVM}_{\mathrm{RMS}} = \sqrt{ \frac{\mathbb{E}[|R_k - X_k|^2]}{\mathbb{E}[|X_k|^2]} }
-\]
+$$
 
-where \(R_k\) are the received (equalized) frequency-domain symbols and \(X_k\) the transmitted symbols. The result is reported as a percentage (100 × EVM_RMS). Lower EVM indicates better modulation accuracy; it complements BER by characterizing symbol-level error before hard decision.
+where $R_k$ are the received (equalized) frequency-domain symbols and $X_k$ the transmitted symbols. The result is reported as a percentage (100 × EVM_RMS). Lower EVM indicates better modulation accuracy; it complements BER by characterizing symbol-level error before hard decision.
 
 ---
 
