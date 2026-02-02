@@ -37,7 +37,13 @@ py -m pytest tests/ -v
 
 From the project root: run `run_simulation.py`.
 
-Results: `results/<N>_symbols/` (AWGN), `results/<N>_symbols_multipath_zf/`, `_mmse/`, `_zf_pilots/`, `_mmse_pilots/` (multipath); each has `images/` and CSV (BER + EVM). **Summary outputs** (organized by metric): `results/summary/ber/`, `evm/`, `constellation/`, `pilots/`, `docs/`. Commands: `docs/RUN_AND_TEST.md`. **Complete checklist:** `docs/COMPLETE_RUN_GUIDE.md`.
+Results: `results/<N>_symbols/` (AWGN), `results/<N>_symbols_multipath_zf/`, `_mmse/`, `_zf_pilots/`, `_mmse_pilots/` (multipath); each has `images/` and CSV (BER + EVM). **Summary outputs** (organized by metric): `results/summary/ber/`, `evm/`, `constellation/`, `pilots/`, `docs/`. **Run guide (commands and full checklist):** `docs/complete_run_guide.md`.
+
+**Sample result (BER: ZF vs MMSE, multipath):**
+
+![BER ZF vs MMSE](results/summary/ber/ber_comparison_zf_vs_mmse_5000symbols.png)
+
+More plots: `results/summary/ber/`, `evm/`, `constellation/`, `pilots/`. Block diagram: `docs/images/ofdm_block_diagram.png`.
 
 ---
 
@@ -103,7 +109,7 @@ OFDM-Simulator-Python/
 │   ├── <N>_symbols_multipath_zf_pilots/    # multipath with pilots (ZF)
 │   ├── <N>_symbols_multipath_mmse_pilots/  # multipath with pilots (MMSE)
 │   └── summary/                     # comparison table, BER plots, constellation grid, pilot comparison
-├── docs/
+├── docs/                            # complete_run_guide.md, ofdm_overview.md, lessons_learned.md, next_phase_plan.md
 ├── requirements.txt
 └── README.md
 ```
@@ -155,7 +161,7 @@ Results: `results/<N>_symbols/` (AWGN), `results/<N>_symbols_multipath_zf/` or `
 
 ## Key concepts
 
-Baseband chain: bits → modulation → pilot insertion → IFFT → CP; receiver: CP removal → FFT → channel estimation from pilots (LS) → ZF/MMSE equalization (multipath) → demod → BER. EVM measures received vs transmitted symbol deviation (%). CP enables circular convolution and one-tap equalization. Pilots enable channel estimation in frequency-selective channels. Gray coding; theoretical BER (AWGN). Tests: transmitter, receiver, channel, theory, equalizers, evm, pilots. For lessons learned and next-phase roadmap, see `docs/LESSONS_LEARNED.md` and `docs/NEXT_PHASE_PLAN.md`.
+Baseband chain: bits → modulation → pilot insertion → IFFT → CP; receiver: CP removal → FFT → channel estimation from pilots (LS) → ZF/MMSE equalization (multipath) → demod → BER. EVM measures received vs transmitted symbol deviation (%). CP enables circular convolution and one-tap equalization. Pilots enable channel estimation in frequency-selective channels. Gray coding; theoretical BER (AWGN). Tests: transmitter, receiver, channel, theory, equalizers, evm, pilots. For lessons learned and next-phase roadmap, see `docs/lessons_learned.md` and `docs/next_phase_plan.md`.
 
 ---
 
@@ -178,7 +184,7 @@ py -m pytest tests/ -v
 py -m pytest tests/ -v --cov=src   # with coverage (requires pytest-cov)
 ```
 
-On Linux/macOS: `pytest tests/ -v`. Full run/test reference: **`docs/RUN_AND_TEST.md`**.
+On Linux/macOS: `pytest tests/ -v`. Full run/test reference: **`docs/complete_run_guide.md`**.
 
 Tests cover: transmitter, receiver, channel (AWGN + multipath), theory, equalizers (ZF, MMSE), EVM, pilots (pattern generation, insertion, channel estimation).
 
@@ -192,4 +198,4 @@ MIT License.
 
 ## Notes
 
-OFDM PHY-layer simulation. Mathematical details: `docs/ofdm_overview.md`. Lessons learned, limitations, and future work: `docs/LESSONS_LEARNED.md`. Next phase (EVM and pilots done; optional: CFO, STO): `docs/NEXT_PHASE_PLAN.md`.
+OFDM PHY-layer simulation. Mathematical details: `docs/ofdm_overview.md`. Lessons learned, limitations, and future work: `docs/lessons_learned.md`. Next phase (EVM and pilots done; optional: CFO, STO): `docs/next_phase_plan.md`.

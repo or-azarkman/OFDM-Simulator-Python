@@ -9,12 +9,12 @@ ORGANIZED STRUCTURE:
 
 See README.md for detailed structure and contents.
 
-To regenerate: run from project root as described in docs/RUN_AND_TEST.md
+To regenerate: run from project root as described in docs/complete_run_guide.md
   (plot_ber_comparison.py for BER; plot_evm_comparison.py for EVM;
    plot_constellation_comparison.py for constellation;
    plot_pilots_comparison.py for pilots comparison).
 
-To organize existing files: py results/summary/ORGANIZE_EXISTING.py
+To organize existing files: py results/summary/organize_existing.py
 
 Results folder layout: <N>_symbols (AWGN), <N>_symbols_multipath (no equalizer), 
 <N>_symbols_multipath_zf, <N>_symbols_multipath_mmse, 
