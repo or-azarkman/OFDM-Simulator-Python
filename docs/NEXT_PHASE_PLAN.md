@@ -1,17 +1,25 @@
 # Next Phase Plan — OFDM Simulator
 
+This document tracks what is done and what remains optional for the OFDM simulator. All core steps and the main optional extensions (EVM, Pilots) are **done**.
+
+---
+
 ## 1. Status confirmation
 
 | Step | Description | Status |
 |------|-------------|--------|
-| 0 | Branch workflow | Ready (documented) |
+| 0 | Branch workflow | Documented |
 | **1** | Multipath channel | **Done** |
 | **2** | ZF/MMSE equalizer | **Done** |
 | **3** | Simulation scripts (--channel, --equalize) | **Done** |
 | **4** | Config + docs | **Done** |
 | **5** | Lessons learned | **Done** (`docs/LESSONS_LEARNED.md`) |
+| **EVM** | Error Vector Magnitude | **Done** (`src/evm.py`, `results/summary/evm/`) |
+| **Pilots** | Pilot-based channel estimation | **Done** (`src/pilots.py`, `results/summary/pilots/`) |
 
-Steps 1–5 are complete. **EVM** (Phase B) is implemented. Remaining Phase B: pilots, CFO, STO as in the table below.
+**Step 0 — Branch workflow (Documented):** The project uses Git branches for features (e.g. `feature/pilots`); the workflow is documented here and in the README (clone, branch, run, push). No separate "branch workflow" deliverable is required; the status means the process is defined and ready to use.
+
+**Current state:** Steps 1–5, EVM, and Pilots are complete. Remaining optional extensions: CFO, STO (synchronization); 64‑QAM and FEC are optional.
 
 ---
 
@@ -19,66 +27,41 @@ Steps 1–5 are complete. **EVM** (Phase B) is implemented. Remaining Phase B: p
 
 ### Phase A: Step 5 — Lessons learned (**done**)
 
-**Goal:** One short document that shows engineering reflection. No new code; strengthens the narrative for interviews.
-
-**Deliverable:** `docs/LESSONS_LEARNED.md` — created. Contains:
-
-- **Lessons learned:** e.g. CP and circular convolution, BER vs spectral efficiency trade-off, why equalization matters in multipath, ZF vs MMSE (noise amplification at nulls vs noise-aware).
-- **Limitations:** e.g. ideal sync (no CFO/STO), known channel (no pilot-based estimation), no FEC.
-- **Future improvements:** Short list (e.g. EVM, pilots, CFO/STO, 64-QAM, FEC).
-
-**Effort:** Low. **Impact:** High for an interviewer (shows maturity and self-awareness).
+**Deliverable:** `docs/LESSONS_LEARNED.md` — technical notes on CP and circular convolution, BER vs spectral efficiency, modulation choice when BER/EVM is too high (step down for wider decision regions), equalization (ZF vs MMSE), validation (BER, EVM, constellations), pilot-based channel estimation. Limitations: ideal sync (no CFO/STO); no FEC. Future: CFO/STO, 64‑QAM, FEC.
 
 ---
 
-### Phase B: Optional extensions (by priority and fit)
+### Phase B: Optional extensions (by priority)
 
-| Extension | What it is | Fit for “grad, no experience” | Effort | Impact | Recommendation |
-|-----------|------------|--------------------------------|--------|--------|----------------|
-| **EVM** | Error Vector Magnitude — standard metric (3GPP, Wi-Fi) | Very good | Low | High | **Done.** Implemented in `src/evm.py`; EVM vs SNR per run; comparison plots and table in `results/summary/`. |
-| **Pilots** | Pilot subcarriers + simple channel estimation | Very good | Medium | High | **Strong second.** Moves from “known channel” to “estimated channel”; very relevant to real systems. |
-| **CFO** | Carrier frequency offset + correction (e.g. phase rotation, correction loop) | Good | Medium | High | **Good third.** Clearly shows understanding of real-world impairments. |
-| **STO** | Symbol timing offset + coarse/fine sync | Good | Medium–High | High | **Good fourth.** Complements CFO; both are “synchronization” story. |
-| 64-QAM | Add modulation (you already have 16-QAM) | Nice to have | Low | Medium | Optional. |
-| FEC | Forward error correction (e.g. convolutional code) | Nice to have | High | High | Optional; larger scope. |
+| Extension | Description | Effort | Impact | Status |
+|-----------|-------------|--------|--------|--------|
+| **EVM** | Error Vector Magnitude — standard metric (3GPP, Wi-Fi); symbol-level accuracy | Low | High | **Done.** `src/evm.py`; EVM vs SNR per run; comparison plots and table in `results/summary/evm/`. |
+| **Pilots** | Pilot subcarriers + LS channel estimation; known vs estimated channel | Medium | High | **Done.** `src/pilots.py`; pattern, insertion, LS estimation; integrated in TX/RX; comparison plots in `results/summary/pilots/`. |
+| **CFO** | Carrier frequency offset + correction (e.g. phase rotation, correction loop) | Medium | High | Optional. Sync impairment and correction. |
+| **STO** | Symbol timing offset + coarse/fine sync (e.g. CP or preamble correlation) | Medium–High | High | Optional. Complements CFO. |
+| 64-QAM | Higher-order modulation (QPSK and 16-QAM already in place) | Low | Medium | Optional. |
+| FEC | Forward error correction (e.g. convolutional, LDPC) | High | High | Optional; larger scope. |
 
-**Suggested order for extensions:**
+**Suggested order for extensions (EVM and Pilots are done):**
 
-1. ~~**EVM**~~ — **Done.** EVM vs SNR per run; comparison plots (AWGN vs Multipath, ZF vs MMSE, all scenarios) and table in `results/summary/`; `plot_evm_comparison.py`.
-2. **Pilots** — insert pilots in frequency grid, estimate channel from pilots (e.g. LS), use estimated H in ZF/MMSE. Enables “unknown channel” scenario.
-3. **CFO** — add phase drift per sample (e.g. $$\exp(j \cdot 2\pi \cdot \Delta f \cdot n)$$), then correct (e.g. correlation with known preamble or pilots). Document as “sync impairment + correction.”
+1. ~~**EVM**~~ — **Done.** EVM vs SNR per run; comparison plots and table in `results/summary/evm/`; `plot_evm_comparison.py`.
+2. ~~**Pilots**~~ — **Done.** Pilot pattern (`generate_pilot_pattern`), insertion (`insert_pilots`), LS channel estimation (`estimate_channel_ls`); integrated into transmitter/receiver; tests in `tests/test_pilots.py`.
+3. **CFO** — add phase drift per sample (e.g. $$\exp(j \cdot 2\pi \cdot \Delta f \cdot n)$$), then correct (e.g. correlation with known preamble or pilots). Document as sync impairment and correction.
 4. **STO** — model delay (shift), then detect/estimate and correct (e.g. correlation with CP or preamble). Document alongside CFO.
 
-Do not feel obliged to implement all of them; **EVM + Lessons learned** alone already raise the bar. Pilots + one of CFO/STO would make the project stand out clearly.
+EVM and Pilots are done. The project is in a strong state; CFO/STO are optional next steps if you continue.
 
 ---
 
-## 3. Concrete next steps (action list)
-
-1. **Step 5 done:** `docs/LESSONS_LEARNED.md` — lessons learned, limitations, future work (EVM, pilots, CFO, STO).
-
-2. **Optional — EVM:**  
-   - Add `src/evm.py`: e.g. `compute_evm(received_symbols, transmitted_symbols)` (per symbol or average).  
-   - In simulation: compute EVM per SNR (and per scenario if desired).  
-   - Plot EVM vs SNR (and add to `results/summary/` if you want).  
-   - Mention in README and `ofdm_overview.md`.
-
-3. **Optional — Pilots / CFO / STO:**  
-   - Plan in small steps (e.g. pilots first, then CFO or STO).  
-   - Keep existing tests passing; add tests for new functions.  
-   - Update this doc with progress when you start.
-
----
-
-## 4. What to skip or defer
+## 3. What to skip or defer
 
 - **Full SDR / real RF:** Out of scope — this repo is baseband simulation only; no RF hardware or SDR.
-- **Full FEC chain:** High effort; list as “future work” in Lessons learned unless you add a dedicated FEC step.
+- **Full FEC chain:** High effort; list as "future work" in Lessons learned unless you add a dedicated FEC step.
 - **Too many modulations:** 64-QAM is optional; QPSK + 16-QAM already demonstrate the trade-off.
 
 ---
 
-## 5. Summary
+## 4. Summary
 
-- **Status:** Steps 1–5 complete. Next: Phase B optional extensions — EVM first, then pilots, then CFO/STO as time allows.
-- **Interview narrative:** “I built an OFDM sim with multipath and equalization, validated with BER and constellations, wrote lessons learned, and plan to add EVM / pilots / sync as next steps.” Strong, coherent story for a grad with no industry experience.
+- **Status:** Steps 1–5, EVM, and Pilots are complete. Optional next: CFO/STO (synchronization); 64‑QAM and FEC as time allows.
+- **Scope:** OFDM baseband transceiver with multipath, ZF/MMSE equalization, pilot-based channel estimation, BER and EVM validation, modulation vs. EVM trade-off (step down to lower-order modulation when BER/EVM is too high). Remaining optional work: CFO, STO.

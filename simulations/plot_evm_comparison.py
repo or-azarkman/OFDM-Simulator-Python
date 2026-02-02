@@ -6,7 +6,7 @@ EVM comparison plots from existing CSV results.
 - All scenarios: single plot with AWGN, Multipath no eq, ZF, MMSE (per modulation).
 - Comparison table: EVM (%) by scenario per SNR.
 
-Run from project root: python simulations/plot_evm_comparison.py [--symbols 5000]
+Run from project root: py simulations/plot_evm_comparison.py [--symbols 5000]
 
 Requires EVM CSV files from simulations. Generate them first:
   py run_simulation.py
@@ -15,7 +15,7 @@ Requires EVM CSV files from simulations. Generate them first:
   py run_simulation.py --channel multipath --equalize mmse
 (Use --symbols 500 for a quick run.)
 
-Output (results/summary/): evm_comparison_*.png, evm_comparison_table.csv, evm_comparison_table.md.
+Output (results/summary/evm/): evm_comparison_*.png, evm_comparison_table.csv, evm_comparison_table.md.
 """
 
 import sys
@@ -30,6 +30,8 @@ from typing import Dict, Tuple
 
 import numpy as np
 import matplotlib.pyplot as plt
+
+from simulations.config import SimulationConfig
 
 
 def _project_root() -> Path:
@@ -77,8 +79,7 @@ def plot_evm_awgn_vs_multipath(symbols: int = 5000) -> None:
     results = root / "results"
     awgn_dir = results / f"{symbols}_symbols"
     multipath_dir = _multipath_dir(results, symbols)
-    summary_dir = results / "summary"
-    summary_dir.mkdir(parents=True, exist_ok=True)
+    summary_dir = SimulationConfig.summary_evm_dir()
 
     snr_awgn_q, evm_awgn_q = _load_evm_csv(awgn_dir / f"evm_vs_snr_{symbols}symbols_qpsk.csv")
     snr_awgn_16, evm_awgn_16 = _load_evm_csv(awgn_dir / f"evm_vs_snr_{symbols}symbols_16qam.csv")
@@ -113,8 +114,7 @@ def plot_evm_zf_vs_mmse(symbols: int = 5000) -> None:
     """Plot ZF vs MMSE EVM (multipath) for QPSK and 16-QAM."""
     root = _project_root()
     results = root / "results"
-    summary_dir = results / "summary"
-    summary_dir.mkdir(parents=True, exist_ok=True)
+    summary_dir = SimulationConfig.summary_evm_dir()
     d_zf = results / f"{symbols}_symbols_multipath_zf"
     d_mmse = results / f"{symbols}_symbols_multipath_mmse"
     if not d_zf.exists() or not d_mmse.exists():
@@ -149,8 +149,7 @@ def plot_evm_all_scenarios(symbols: int = 5000, modulation: str = "16QAM") -> No
     """Plot EVM vs SNR for all four scenarios (AWGN, Multipath no eq, ZF, MMSE) — one modulation."""
     root = _project_root()
     results = root / "results"
-    summary_dir = results / "summary"
-    summary_dir.mkdir(parents=True, exist_ok=True)
+    summary_dir = SimulationConfig.summary_evm_dir()
     mod = modulation.upper()
     mod_key = "qpsk" if mod == "QPSK" else "16qam"
     mod_label = "QPSK" if mod == "QPSK" else "16-QAM"
@@ -197,8 +196,7 @@ def save_evm_comparison_table(symbols: int = 5000) -> None:
     """Build EVM comparison table: AWGN, Multipath (no eq), ZF, MMSE per SNR. Save CSV + MD."""
     root = _project_root()
     results = root / "results"
-    summary_dir = results / "summary"
-    summary_dir.mkdir(parents=True, exist_ok=True)
+    summary_dir = SimulationConfig.summary_evm_dir()
     awgn_dir = results / f"{symbols}_symbols"
     mp_none_dir = results / f"{symbols}_symbols_multipath"
     mp_zf_dir = results / f"{symbols}_symbols_multipath_zf"

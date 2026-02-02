@@ -7,7 +7,7 @@ BER comparison plots from existing CSV results.
 - Comparison table: BER by scenario (AWGN, Multipath no eq, ZF, MMSE) per SNR.
 
 Run from project root: py simulations/plot_ber_comparison.py [--symbols 5000]
-Output (results/summary/): ber_comparison_*.png, comparison_table.csv, comparison_table.md.
+Output (results/summary/ber/): ber_comparison_*.png, comparison_table.csv, comparison_table.md, comparison_table_readable.txt.
 """
 
 import sys
@@ -24,6 +24,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from src.theory import theoretical_ber
+from simulations.config import SimulationConfig
 
 
 def _project_root() -> Path:
@@ -53,8 +54,7 @@ def plot_awgn_vs_multipath(symbols: int = 5000) -> None:
     results = root / "results"
     awgn_dir = results / f"{symbols}_symbols"
     multipath_dir = _multipath_dir(results, symbols)
-    summary_dir = results / "summary"
-    summary_dir.mkdir(parents=True, exist_ok=True)
+    summary_dir = SimulationConfig.summary_ber_dir()
 
     snr_awgn_q, ber_awgn_q = _load_ber_csv(awgn_dir / f"ber_vs_snr_{symbols}symbols_qpsk.csv")
     snr_awgn_16, ber_awgn_16 = _load_ber_csv(awgn_dir / f"ber_vs_snr_{symbols}symbols_16qam.csv")
@@ -104,8 +104,7 @@ def plot_symbols_comparison() -> None:
     """Plot 500 vs 5000 symbols (multipath ZF) to show Monte Carlo convergence."""
     root = _project_root()
     results = root / "results"
-    summary_dir = results / "summary"
-    summary_dir.mkdir(parents=True, exist_ok=True)
+    summary_dir = SimulationConfig.summary_ber_dir()
 
     for mod, name in [("qpsk", "QPSK"), ("16qam", "16-QAM")]:
         d500 = _multipath_dir_n(results, 500)
@@ -134,8 +133,7 @@ def plot_zf_vs_mmse(symbols: int = 5000) -> None:
     """Plot ZF vs MMSE BER (multipath) for QPSK and 16-QAM."""
     root = _project_root()
     results = root / "results"
-    summary_dir = results / "summary"
-    summary_dir.mkdir(parents=True, exist_ok=True)
+    summary_dir = SimulationConfig.summary_ber_dir()
     d_zf = results / f"{symbols}_symbols_multipath_zf"
     d_mmse = results / f"{symbols}_symbols_multipath_mmse"
     if not d_zf.exists() or not d_mmse.exists():
@@ -174,8 +172,7 @@ def save_comparison_table(symbols: int = 5000) -> None:
     """Build BER comparison table: AWGN, Multipath (no eq), ZF, MMSE per SNR. Save CSV + MD."""
     root = _project_root()
     results = root / "results"
-    summary_dir = results / "summary"
-    summary_dir.mkdir(parents=True, exist_ok=True)
+    summary_dir = SimulationConfig.summary_ber_dir()
 
     # Scenario dirs: AWGN, multipath (no suffix = no eq), _zf, _mmse
     awgn_dir = results / f"{symbols}_symbols"

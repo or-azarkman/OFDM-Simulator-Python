@@ -39,6 +39,9 @@ class SimulationConfig:
     multipath_taps: Union[Sequence[complex], np.ndarray, None] = field(
         default_factory=_default_multipath_taps
     )
+    use_pilots: bool = False
+    pilot_spacing: int = 8
+    num_pilots: Optional[int] = None
 
     def __post_init__(self) -> None:
         if isinstance(self.results_dir, str):
@@ -58,6 +61,8 @@ class SimulationConfig:
                 base = f"{base}_mmse"
             elif eq == "zf":
                 base = f"{base}_zf"
+            if getattr(self, "use_pilots", False):
+                base = f"{base}_pilots"
         return self.results_dir / base
 
     @property
@@ -68,3 +73,43 @@ class SimulationConfig:
     def ensure_dirs(self) -> None:
         """Create results and images directories if needed."""
         self.images_dir.mkdir(parents=True, exist_ok=True)
+
+    @staticmethod
+    def summary_dir() -> Path:
+        """Get the summary directory path."""
+        return _project_root() / "results" / "summary"
+
+    @staticmethod
+    def summary_ber_dir() -> Path:
+        """Get the BER summary subdirectory."""
+        d = SimulationConfig.summary_dir() / "ber"
+        d.mkdir(parents=True, exist_ok=True)
+        return d
+
+    @staticmethod
+    def summary_evm_dir() -> Path:
+        """Get the EVM summary subdirectory."""
+        d = SimulationConfig.summary_dir() / "evm"
+        d.mkdir(parents=True, exist_ok=True)
+        return d
+
+    @staticmethod
+    def summary_constellation_dir() -> Path:
+        """Get the constellation summary subdirectory."""
+        d = SimulationConfig.summary_dir() / "constellation"
+        d.mkdir(parents=True, exist_ok=True)
+        return d
+
+    @staticmethod
+    def summary_pilots_dir() -> Path:
+        """Get the pilots summary subdirectory."""
+        d = SimulationConfig.summary_dir() / "pilots"
+        d.mkdir(parents=True, exist_ok=True)
+        return d
+
+    @staticmethod
+    def summary_docs_dir() -> Path:
+        """Get the docs summary subdirectory."""
+        d = SimulationConfig.summary_dir() / "docs"
+        d.mkdir(parents=True, exist_ok=True)
+        return d

@@ -21,6 +21,7 @@ if __name__ == "__main__":
     parser.add_argument("--no-seed", action="store_true", help="No seed")
     parser.add_argument("--channel", type=str, default="awgn", choices=("awgn", "multipath"), help="Channel type")
     parser.add_argument("--equalize", type=str, default="zf", choices=("none", "zf", "mmse"), help="Equalizer for multipath")
+    parser.add_argument("--pilots", action="store_true", help="Use pilot subcarriers for channel estimation (multipath)")
     args = parser.parse_args()
     config = SimulationConfig(
         num_symbols=args.symbols,
@@ -28,5 +29,6 @@ if __name__ == "__main__":
         random_seed=None if args.no_seed else args.seed,
         channel_type=args.channel,
         equalize=args.equalize,
+        use_pilots=args.pilots,
     )
     main(config)

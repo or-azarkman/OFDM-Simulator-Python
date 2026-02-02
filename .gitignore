@@ -35,6 +35,9 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
+# Accidental / local files
+tore .
+
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb
