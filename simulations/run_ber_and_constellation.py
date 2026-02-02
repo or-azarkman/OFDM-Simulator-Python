@@ -29,6 +29,13 @@ from src.channel import awgn_channel, multipath_channel
 from src.theory import theoretical_ber
 from src.equalizers import equalize_zf, equalize_mmse
 from src.evm import compute_evm
+from src.pilots import (
+    generate_pilot_pattern,
+    generate_pilot_symbols,
+    extract_pilots,
+    estimate_channel_ls,
+    get_data_indices,
+)
 
 CONFIG = SimulationConfig()
 
@@ -62,14 +69,50 @@ def _multipath_freq_response(config: SimulationConfig) -> np.ndarray:
     return np.fft.fft(h_pad)
 
 
-def _equalize(freq_symbols: np.ndarray, config: SimulationConfig, snr_db: float) -> np.ndarray:
-    """Apply ZF or MMSE equalization when channel is multipath; no-op otherwise."""
+def _get_pilot_config(config: SimulationConfig) -> tuple[np.ndarray, np.ndarray]:
+    """Get pilot indices and symbols for the given config."""
+    if not getattr(config, "use_pilots", False):
+        return np.array([]), np.array([])
+    pilot_indices = generate_pilot_pattern(
+        config.fft_size,
+        pilot_spacing=getattr(config, "pilot_spacing", 8),
+        num_pilots=getattr(config, "num_pilots", None),
+    )
+    pilot_symbols = generate_pilot_symbols(len(pilot_indices))
+    return pilot_indices, pilot_symbols
+
+
+def _equalize(
+    freq_symbols: np.ndarray,
+    config: SimulationConfig,
+    snr_db: float,
+    tx_pilot_symbols: Optional[np.ndarray] = None,
+    pilot_indices: Optional[np.ndarray] = None,
+) -> np.ndarray:
+    """
+    Apply ZF or MMSE equalization when channel is multipath; no-op otherwise.
+    
+    If pilots are enabled, uses estimated channel from pilots; otherwise uses true channel.
+    """
     if config.channel_type.lower() != "multipath" or config.multipath_taps is None:
         return freq_symbols
     eq = (getattr(config, "equalize", None) or "zf").lower()
     if eq == "none":
         return freq_symbols
-    H = _multipath_freq_response(config)
+    
+    # Use estimated channel from pilots if available, otherwise use true channel
+    if (getattr(config, "use_pilots", False) and 
+        tx_pilot_symbols is not None and 
+        pilot_indices is not None and 
+        len(pilot_indices) > 0):
+        # Estimate channel from pilots
+        rx_pilots = extract_pilots(freq_symbols, pilot_indices)
+        H_est = estimate_channel_ls(rx_pilots, tx_pilot_symbols, pilot_indices, config.fft_size)
+        H = H_est
+    else:
+        # Use true channel (for comparison or when pilots disabled)
+        H = _multipath_freq_response(config)
+    
     if eq == "mmse":
         snr_linear = 10.0 ** (snr_db / 10.0)
         return equalize_mmse(freq_symbols, H, snr_linear)
@@ -84,13 +127,22 @@ def get_equalized_freq_symbols(
 ) -> np.ndarray:
     """Return equalized frequency-domain symbols for constellation plotting.
     Used by plot_constellation_comparison to compare AWGN vs multipath (no eq, ZF, MMSE)."""
+    pilot_indices, pilot_symbols = _get_pilot_config(config)
     bits_per_sub = 2 if modulation.upper() == "QPSK" else 4
-    total_bits = num_symbols * config.fft_size * bits_per_sub
+    num_data_subcarriers = config.fft_size - len(pilot_indices) if len(pilot_indices) > 0 else config.fft_size
+    total_bits = num_symbols * num_data_subcarriers * bits_per_sub
     bits_tx = generate_random_bits(total_bits)
     ofdm_stream = generate_ofdm_stream(
-        bits_tx, config.fft_size, config.cp_len, modulation
+        bits_tx, config.fft_size, config.cp_len, modulation,
+        pilot_indices if len(pilot_indices) > 0 else None,
+        pilot_symbols if len(pilot_symbols) > 0 else None,
     )
-    return get_freq_symbols_from_stream(ofdm_stream, config, snr_db)
+    freq_symbols = get_freq_symbols_from_stream(ofdm_stream, config, snr_db)
+    # Extract only data subcarriers for constellation plotting
+    if len(pilot_indices) > 0:
+        data_indices = get_data_indices(config.fft_size, pilot_indices)
+        freq_symbols = freq_symbols[:, data_indices] if freq_symbols.ndim == 2 else freq_symbols[data_indices]
+    return freq_symbols
 
 
 def get_freq_symbols_from_stream(
@@ -100,10 +152,15 @@ def get_freq_symbols_from_stream(
 ) -> np.ndarray:
     """Return equalized frequency-domain symbols from a given OFDM stream (with CP).
     Same stream can be passed to different configs (AWGN, multipath none/zf/mmse) for fair comparison."""
+    pilot_indices, pilot_symbols = _get_pilot_config(config)
     noisy = _apply_channel(ofdm_stream, config, float(snr_db))
     ofdm_no_cp = _after_channel_no_cp(noisy, config)
     freq = fft_ofdm(ofdm_no_cp)
-    return _equalize(freq, config, float(snr_db))
+    return _equalize(
+        freq, config, float(snr_db),
+        pilot_symbols if len(pilot_symbols) > 0 else None,
+        pilot_indices if len(pilot_indices) > 0 else None,
+    )
 
 
 def simulate_ber_monte_carlo(
@@ -120,22 +177,34 @@ def simulate_ber_monte_carlo(
     Returns:
         Average BER at each SNR point.
     """
+    pilot_indices, pilot_symbols = _get_pilot_config(config)
     bits_per_sub = 2 if modulation.upper() == "QPSK" else 4
+    num_data_subcarriers = config.fft_size - len(pilot_indices) if len(pilot_indices) > 0 else config.fft_size
     ber_avg = []
 
     for snr_db in config.snr_range_db:
         ber_trials = []
         for _ in range(config.monte_carlo_trials):
-            total_bits = config.num_symbols * config.fft_size * bits_per_sub
+            total_bits = config.num_symbols * num_data_subcarriers * bits_per_sub
             bits_tx = generate_random_bits(total_bits)
 
             ofdm_stream = generate_ofdm_stream(
-                bits_tx, config.fft_size, config.cp_len, modulation
+                bits_tx, config.fft_size, config.cp_len, modulation,
+                pilot_indices if len(pilot_indices) > 0 else None,
+                pilot_symbols if len(pilot_symbols) > 0 else None,
             )
             noisy_stream = _apply_channel(ofdm_stream, config, float(snr_db))
             ofdm_no_cp = _after_channel_no_cp(noisy_stream, config)
             freq_symbols = fft_ofdm(ofdm_no_cp)
-            freq_symbols = _equalize(freq_symbols, config, float(snr_db))
+            freq_symbols = _equalize(
+                freq_symbols, config, float(snr_db),
+                pilot_symbols if len(pilot_symbols) > 0 else None,
+                pilot_indices if len(pilot_indices) > 0 else None,
+            )
+            # Extract only data subcarriers for demodulation
+            if len(pilot_indices) > 0:
+                data_indices = get_data_indices(config.fft_size, pilot_indices)
+                freq_symbols = freq_symbols[:, data_indices] if freq_symbols.ndim == 2 else freq_symbols[data_indices]
             bits_rx = demodulate_ofdm_symbols(freq_symbols, modulation)
 
             ber_trials.append(compute_ber(bits_tx, bits_rx))
@@ -159,21 +228,31 @@ def simulate_evm(
         Array of average EVM (%) at each SNR point.
     """
     trials = evm_trials if evm_trials is not None else min(30, config.monte_carlo_trials)
+    pilot_indices, pilot_symbols = _get_pilot_config(config)
     bits_per_sub = 2 if modulation.upper() == "QPSK" else 4
+    num_data_subcarriers = config.fft_size - len(pilot_indices) if len(pilot_indices) > 0 else config.fft_size
     evm_avg = []
 
     for snr_db in config.snr_range_db:
         evm_trial_list = []
         for _ in range(trials):
-            total_bits = config.num_symbols * config.fft_size * bits_per_sub
+            total_bits = config.num_symbols * num_data_subcarriers * bits_per_sub
             bits_tx = generate_random_bits(total_bits)
             ofdm_stream = generate_ofdm_stream(
-                bits_tx, config.fft_size, config.cp_len, modulation
+                bits_tx, config.fft_size, config.cp_len, modulation,
+                pilot_indices if len(pilot_indices) > 0 else None,
+                pilot_symbols if len(pilot_symbols) > 0 else None,
             )
             tx_freq = get_tx_freq_symbols_from_stream(ofdm_stream, config)
             rx_freq = get_freq_symbols_from_stream(ofdm_stream, config, float(snr_db))
-            tx_flat = tx_freq.flatten()
-            rx_flat = rx_freq.flatten()
+            # Extract only data subcarriers for EVM calculation
+            if len(pilot_indices) > 0:
+                data_indices = get_data_indices(config.fft_size, pilot_indices)
+                tx_flat = tx_freq[:, data_indices].flatten() if tx_freq.ndim == 2 else tx_freq[data_indices].flatten()
+                rx_flat = rx_freq[:, data_indices].flatten() if rx_freq.ndim == 2 else rx_freq[data_indices].flatten()
+            else:
+                tx_flat = tx_freq.flatten()
+                rx_flat = rx_freq.flatten()
             evm_trial_list.append(compute_evm(rx_flat, tx_flat, percent=True))
         evm_avg.append(np.mean(evm_trial_list))
         print(f"  EVM {modulation} @ {snr_db} dB → avg EVM = {evm_avg[-1]:.2f}%")
@@ -333,18 +412,30 @@ def plot_constellations(
 ) -> None:
     """Plot constellation at selected SNRs; save to config run directory."""
     plt.figure(figsize=(len(snr_list) * 4, 4))
+    pilot_indices, pilot_symbols = _get_pilot_config(config)
     bits_per_sub = 2 if modulation.upper() == "QPSK" else 4
-    total_bits = config.fft_size * bits_per_sub
+    num_data_subcarriers = config.fft_size - len(pilot_indices) if len(pilot_indices) > 0 else config.fft_size
+    total_bits = num_data_subcarriers * bits_per_sub
 
     for idx, snr in enumerate(snr_list):
         bits_tx = generate_random_bits(total_bits)
         ofdm_symbol = generate_ofdm_stream(
-            bits_tx, config.fft_size, config.cp_len, modulation
+            bits_tx, config.fft_size, config.cp_len, modulation,
+            pilot_indices if len(pilot_indices) > 0 else None,
+            pilot_symbols if len(pilot_symbols) > 0 else None,
         )
         noisy = _apply_channel(ofdm_symbol, config, float(snr))
         base_no_cp = _after_channel_no_cp(noisy, config)
         freq_syms = fft_ofdm(base_no_cp)
-        freq_syms = _equalize(freq_syms, config, float(snr))
+        freq_syms = _equalize(
+            freq_syms, config, float(snr),
+            pilot_symbols if len(pilot_symbols) > 0 else None,
+            pilot_indices if len(pilot_indices) > 0 else None,
+        )
+        # Extract only data subcarriers for constellation plotting
+        if len(pilot_indices) > 0:
+            data_indices = get_data_indices(config.fft_size, pilot_indices)
+            freq_syms = freq_syms[:, data_indices] if freq_syms.ndim == 2 else freq_syms[data_indices]
 
         plt.subplot(1, len(snr_list), idx + 1)
         plt.scatter(

@@ -5,7 +5,7 @@ Generates one OFDM stream per (modulation, SNR), then runs it through four scena
 so constellations are directly comparable. Output: 4 columns × 3 rows (SNR) per modulation.
 
 Run from project root: py simulations/plot_constellation_comparison.py [--symbols 100]
-Output: results/summary/constellation_comparison_QPSK.png, constellation_comparison_16QAM.png
+Output (results/summary/constellation/): constellation_comparison_QPSK.png, constellation_comparison_16QAM.png
 """
 
 import sys
@@ -53,9 +53,7 @@ def plot_constellation_comparison(
     seed: int = 42,
 ) -> None:
     """Plot 4 (scenarios) × 3 (SNR) constellation grid for QPSK and 16-QAM."""
-    root = _project_root()
-    summary_dir = root / "results" / "summary"
-    summary_dir.mkdir(parents=True, exist_ok=True)
+    summary_dir = SimulationConfig.summary_constellation_dir()
 
     scenarios = _scenario_configs(num_symbols, seed)
     n_cols = len(scenarios)

@@ -115,6 +115,31 @@ def map_to_subcarriers(symbols: np.ndarray, fft_size: int) -> np.ndarray:
     return frame
 
 
+def map_to_subcarriers_with_pilots(
+    data_symbols: np.ndarray,
+    pilot_indices: np.ndarray,
+    pilot_symbols: np.ndarray,
+    fft_size: int,
+) -> np.ndarray:
+    """
+    Map data symbols and insert pilots into the OFDM subcarrier array.
+
+    Data symbols are placed on non-pilot subcarriers; pilots are inserted
+    at specified indices. This enables channel estimation at the receiver.
+
+    Args:
+        data_symbols: Data symbols to place on non-pilot subcarriers.
+        pilot_indices: Subcarrier indices where pilots are placed.
+        pilot_symbols: Pilot symbol values (length must match pilot_indices).
+        fft_size: Total number of subcarriers (FFT size).
+
+    Returns:
+        Frequency‑domain frame with pilots inserted.
+    """
+    from src.pilots import insert_pilots
+    return insert_pilots(data_symbols, pilot_indices, pilot_symbols, fft_size)
+
+
 def ofdm_ifft(frame: np.ndarray) -> np.ndarray:
     """
     Perform Inverse FFT (IFFT) to generate time‑domain OFDM symbol.
@@ -150,7 +175,9 @@ def generate_ofdm_symbol(
     bits: np.ndarray,
     fft_size: int,
     cp_len: int,
-    modulation: str = "QPSK"
+    modulation: str = "QPSK",
+    pilot_indices: np.ndarray = None,
+    pilot_symbols: np.ndarray = None,
 ) -> np.ndarray:
     """
     Create one OFDM symbol with the specified modulation.
@@ -160,6 +187,8 @@ def generate_ofdm_symbol(
         fft_size (int): FFT size (number of subcarriers).
         cp_len (int): Cyclic prefix length.
         modulation (str): "QPSK" or "16QAM"
+        pilot_indices (np.ndarray, optional): Subcarrier indices for pilots.
+        pilot_symbols (np.ndarray, optional): Pilot symbol values.
 
     Returns:
         np.ndarray: Time‑domain OFDM symbol including CP.
@@ -171,7 +200,11 @@ def generate_ofdm_symbol(
     else:
         raise ValueError(f"Unsupported modulation: {modulation}")
 
-    freq_frame = map_to_subcarriers(syms, fft_size)
+    if pilot_indices is not None and pilot_symbols is not None:
+        freq_frame = map_to_subcarriers_with_pilots(syms, pilot_indices, pilot_symbols, fft_size)
+    else:
+        freq_frame = map_to_subcarriers(syms, fft_size)
+    
     time_signal = ofdm_ifft(freq_frame)
     return add_cyclic_prefix(time_signal, cp_len)
 
@@ -180,33 +213,43 @@ def generate_ofdm_stream(
     bits: np.ndarray,
     fft_size: int,
     cp_len: int,
-    modulation: str = "QPSK"
+    modulation: str = "QPSK",
+    pilot_indices: np.ndarray = None,
+    pilot_symbols: np.ndarray = None,
 ) -> np.ndarray:
     """
     Convert a full bitstream into multiple OFDM symbols.
 
-    The bits_per_symbol depends on the modulation order:
-        - QPSK: 2 bits per subcarrier
-        - 16‑QAM: 4 bits per subcarrier
+    The bits_per_symbol depends on the modulation order and number of data subcarriers:
+        - QPSK: 2 bits per data subcarrier
+        - 16‑QAM: 4 bits per data subcarrier
+    If pilots are used, only data subcarriers carry information bits.
 
     Args:
         bits (np.ndarray): Full bitstream.
         fft_size (int): FFT size.
         cp_len (int): Cyclic prefix length.
         modulation (str): Modulation type ("QPSK" or "16QAM").
+        pilot_indices (np.ndarray, optional): Subcarrier indices for pilots.
+        pilot_symbols (np.ndarray, optional): Pilot symbol values.
 
     Returns:
         np.ndarray: 2D array [num_symbols, symbol_length_with_cp].
     """
-    bits_per_symbol = fft_size * (2 if modulation.upper()=="QPSK" else 4)
+    if pilot_indices is not None:
+        num_data_subcarriers = fft_size - len(pilot_indices)
+    else:
+        num_data_subcarriers = fft_size
+    
+    bits_per_symbol = num_data_subcarriers * (2 if modulation.upper()=="QPSK" else 4)
     if len(bits) % bits_per_symbol != 0:
-        raise ValueError("Bitstream length must be a multiple of bits_per_symbol.")
+        raise ValueError(f"Bitstream length ({len(bits)}) must be a multiple of bits_per_symbol ({bits_per_symbol}).")
 
     ofdm_symbols = []
     for i in range(len(bits) // bits_per_symbol):
         start = i * bits_per_symbol
         segment = bits[start:start+bits_per_symbol]
         ofdm_symbols.append(
-            generate_ofdm_symbol(segment, fft_size, cp_len, modulation)
+            generate_ofdm_symbol(segment, fft_size, cp_len, modulation, pilot_indices, pilot_symbols)
         )
     return np.array(ofdm_symbols)

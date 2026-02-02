@@ -1,5 +1,9 @@
 # Running simulations and tests
 
+**For a complete checklist of all simulations and plots, see `docs/COMPLETE_RUN_GUIDE.md`.**
+
+---
+
 ## Simulations
 
 **Default (AWGN):**
@@ -27,6 +31,12 @@ py run_simulation.py --channel multipath --equalize mmse --symbols 500
 py run_simulation.py --channel multipath --equalize none --symbols 5000
 ```
 
+**With pilots (channel estimation from pilots; multipath):**
+```
+py run_simulation.py --channel multipath --pilots --symbols 500
+```
+Pilots enable LS channel estimation instead of known channel. Optional: set `pilot_spacing` or `num_pilots` in `simulations/config.py`.
+
 ## Running tests
 
 **From project root:**
@@ -49,7 +59,7 @@ py -m pytest tests/ -v --cov=src --cov-report=term-missing
 
 ## Comparison plots (after running simulations)
 
-To generate summary plots in `results/summary/` (AWGN vs Multipath, 500 vs 5000, ZF vs MMSE):
+To generate summary plots in `results/summary/ber/`, `evm/`, `constellation/`, `pilots/` (AWGN vs Multipath, 500 vs 5000, ZF vs MMSE, pilot comparison):
 
 ```powershell
 py simulations/plot_ber_comparison.py
@@ -79,3 +89,19 @@ py simulations/plot_evm_comparison.py
 py simulations/plot_constellation_comparison.py
 py simulations/plot_constellation_comparison.py --symbols 100
 ```
+
+**Pilot-based channel estimation comparison (Known channel vs Pilot-based):**
+```
+py simulations/plot_pilots_comparison.py --symbols 5000 --equalize zf
+py simulations/plot_pilots_comparison.py --symbols 5000 --equalize mmse
+```
+Generates: BER/EVM comparison plots, channel estimation accuracy plots, constellation comparison. Demonstrates the impact of channel estimation errors on system performance.
+
+**Note:** Summary outputs are organized in `results/summary/` subdirectories:
+- `ber/` — BER plots and tables
+- `evm/` — EVM plots and tables
+- `constellation/` — Constellation comparison plots
+- `pilots/` — Pilot-based channel estimation plots
+- `docs/` — Summary documentation
+
+To organize existing files: `py results/summary/ORGANIZE_EXISTING.py`
