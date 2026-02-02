@@ -38,7 +38,7 @@ In order of priority (see `docs/NEXT_PHASE_PLAN.md` for details):
 
 2. **Pilots and channel estimation:** Insert pilot subcarriers, estimate H from pilots (e.g. least-squares), use estimated H in ZF/MMSE. Moves from “known channel” to “estimated channel.”
 
-3. **CFO (Carrier frequency offset):** Model phase drift (e.g. exp(j·2π·Δf·n)), then correct using correlation with preamble or pilots. Document as a synchronization impairment and correction step.
+3. **CFO (Carrier frequency offset):** Model phase drift (e.g. $\exp(j \cdot 2\pi \cdot \Delta f \cdot n)$), then correct using correlation with preamble or pilots. Document as a synchronization impairment and correction step.
 
 4. **STO (Symbol timing offset):** Model symbol delay, then detect and correct (e.g. using CP or preamble correlation). Complements CFO in a “sync” story.
 
