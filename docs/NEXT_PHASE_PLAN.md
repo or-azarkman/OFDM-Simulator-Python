@@ -46,7 +46,7 @@ Steps 1–5 are complete. **EVM** (Phase B) is implemented. Remaining Phase B: p
 
 1. ~~**EVM**~~ — **Done.** EVM vs SNR per run; comparison plots (AWGN vs Multipath, ZF vs MMSE, all scenarios) and table in `results/summary/`; `plot_evm_comparison.py`.
 2. **Pilots** — insert pilots in frequency grid, estimate channel from pilots (e.g. LS), use estimated H in ZF/MMSE. Enables “unknown channel” scenario.
-3. **CFO** — add phase drift per sample (e.g. $\exp(j \cdot 2\pi \cdot \Delta f \cdot n)$), then correct (e.g. correlation with known preamble or pilots). Document as “sync impairment + correction.”
+3. **CFO** — add phase drift per sample (e.g. $$\exp(j \cdot 2\pi \cdot \Delta f \cdot n)$$), then correct (e.g. correlation with known preamble or pilots). Document as “sync impairment + correction.”
 4. **STO** — model delay (shift), then detect/estimate and correct (e.g. correlation with CP or preamble). Document alongside CFO.
 
 Do not feel obliged to implement all of them; **EVM + Lessons learned** alone already raise the bar. Pilots + one of CFO/STO would make the project stand out clearly.
