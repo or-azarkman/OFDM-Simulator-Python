@@ -14,7 +14,7 @@ Short reflection on what was learned, current limitations, and planned improveme
 
 - **ZF vs MMSE:** ZF inverts the channel (X̂_k = Y_k / H_k), which amplifies noise at subcarriers where |H_k| is small. MMSE balances channel inversion and noise (W_k = H*_k / (|H_k|² + 1/SNR)), often giving better BER at low SNR. The ZF vs MMSE comparison plots illustrate this.
 
-- **Validation:** Comparing simulated BER with theoretical BER (AWGN) and checking constellations at several SNRs helped catch scaling and indexing issues. The 4×3 constellation grid (scenarios × 0/10/20 dB) gives a clear visual comparison of AWGN, multipath without equalizer, ZF, and MMSE.
+- **Validation:** Comparing simulated BER with theoretical BER (AWGN) and checking constellations at several SNRs helped catch scaling and indexing issues. The 4×3 constellation grid (scenarios × 0/10/20 dB) gives a clear visual comparison of AWGN, multipath without equalizer, ZF, and MMSE. EVM provides an additional validation metric that quantifies symbol-level accuracy independently of hard decisions.
 
 ---
 
@@ -34,7 +34,7 @@ Short reflection on what was learned, current limitations, and planned improveme
 
 In order of priority (see `docs/NEXT_PHASE_PLAN.md` for details):
 
-1. **EVM (Error Vector Magnitude):** Add computation and plots of EVM vs SNR (and optionally vs scenario). EVM is a standard metric in 3GPP and Wi-Fi; easy to add from existing symbols.
+1. ~~**EVM (Error Vector Magnitude):**~~ **Done.** EVM computation and plots implemented (`src/evm.py`); EVM vs SNR per run; comparison plots and table in `results/summary/`. EVM is a standard metric in 3GPP and Wi-Fi that complements BER by quantifying symbol-level accuracy.
 
 2. **Pilots and channel estimation:** Insert pilot subcarriers, estimate H from pilots (e.g. least-squares), use estimated H in ZF/MMSE. Moves from “known channel” to “estimated channel.”
 
@@ -50,4 +50,4 @@ In order of priority (see `docs/NEXT_PHASE_PLAN.md` for details):
 
 ## Summary
 
-The project implements a full OFDM baseband chain with AWGN and multipath, ZF/MMSE equalization, and systematic validation (BER, constellations, comparison table). The main gaps are synchronization (CFO/STO) and channel estimation (pilots); these are documented as limitations and as the next steps to implement. This document serves as a concise reference for what was learned and what comes next.
+The project implements a full OFDM baseband chain with AWGN and multipath, ZF/MMSE equalization, and systematic validation (BER, EVM, constellations, comparison tables). The main gaps are synchronization (CFO/STO) and channel estimation (pilots); these are documented as limitations and as the next steps to implement. This document serves as a concise reference for what was learned and what comes next.

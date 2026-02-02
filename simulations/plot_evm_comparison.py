@@ -7,6 +7,14 @@ EVM comparison plots from existing CSV results.
 - Comparison table: EVM (%) by scenario per SNR.
 
 Run from project root: python simulations/plot_evm_comparison.py [--symbols 5000]
+
+Requires EVM CSV files from simulations. Generate them first:
+  py run_simulation.py
+  py run_simulation.py --channel multipath --equalize none
+  py run_simulation.py --channel multipath --equalize zf
+  py run_simulation.py --channel multipath --equalize mmse
+(Use --symbols 500 for a quick run.)
+
 Output (results/summary/): evm_comparison_*.png, evm_comparison_table.csv, evm_comparison_table.md.
 """
 
@@ -26,6 +34,25 @@ import matplotlib.pyplot as plt
 
 def _project_root() -> Path:
     return Path(__file__).resolve().parent.parent
+
+
+_evm_hint_printed = False
+
+
+def _print_evm_run_hint(symbols: int) -> None:
+    """Print once per run how to generate EVM data."""
+    global _evm_hint_printed
+    if _evm_hint_printed:
+        return
+    _evm_hint_printed = True
+    print(
+        "Generate EVM data by running simulations (each run now includes EVM):\n"
+        f"  py run_simulation.py --symbols {symbols}\n"
+        f"  py run_simulation.py --channel multipath --equalize none --symbols {symbols}\n"
+        f"  py run_simulation.py --channel multipath --equalize zf --symbols {symbols}\n"
+        f"  py run_simulation.py --channel multipath --equalize mmse --symbols {symbols}\n"
+        "Then run this script again."
+    )
 
 
 def _load_evm_csv(path: Path) -> Tuple[np.ndarray, np.ndarray]:
@@ -59,7 +86,8 @@ def plot_evm_awgn_vs_multipath(symbols: int = 5000) -> None:
     snr_mp_16, evm_mp_16 = _load_evm_csv(multipath_dir / f"evm_vs_snr_{symbols}symbols_multipath_16qam.csv")
 
     if len(snr_awgn_q) == 0 and len(snr_mp_q) == 0:
-        print(f"No EVM CSV data found for {symbols} symbols. Run BER+EVM simulations first.")
+        print(f"No EVM CSV data found for {symbols} symbols.")
+        _print_evm_run_hint(symbols)
         return
 
     fig, ax = plt.subplots(figsize=(8, 5))
@@ -91,12 +119,14 @@ def plot_evm_zf_vs_mmse(symbols: int = 5000) -> None:
     d_mmse = results / f"{symbols}_symbols_multipath_mmse"
     if not d_zf.exists() or not d_mmse.exists():
         print(f"ZF vs MMSE EVM plot skipped: need both {d_zf.name} and {d_mmse.name}.")
+        _print_evm_run_hint(symbols)
         return
     snr_zf_q, evm_zf_q = _load_evm_csv(d_zf / f"evm_vs_snr_{symbols}symbols_multipath_qpsk.csv")
     snr_zf_16, evm_zf_16 = _load_evm_csv(d_zf / f"evm_vs_snr_{symbols}symbols_multipath_16qam.csv")
     snr_mmse_q, evm_mmse_q = _load_evm_csv(d_mmse / f"evm_vs_snr_{symbols}symbols_multipath_qpsk.csv")
     snr_mmse_16, evm_mmse_16 = _load_evm_csv(d_mmse / f"evm_vs_snr_{symbols}symbols_multipath_16qam.csv")
     if len(snr_zf_q) == 0 or len(snr_mmse_q) == 0:
+        _print_evm_run_hint(symbols)
         return
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(snr_zf_q, evm_zf_q, "o-", label="QPSK ZF", color="C0", markersize=5)
@@ -135,7 +165,8 @@ def plot_evm_all_scenarios(symbols: int = 5000, modulation: str = "16QAM") -> No
     snr_z, evm_z = _load_evm_csv(mp_zf_dir / mp_file)
     snr_m, evm_m = _load_evm_csv(mp_mmse_dir / mp_file)
     if len(snr_a) == 0 and len(snr_n) == 0 and len(snr_z) == 0 and len(snr_m) == 0:
-        print(f"No EVM data for {mod_label} {symbols} symbols. Run simulations first.")
+        print(f"No EVM data for {mod_label} {symbols} symbols.")
+        _print_evm_run_hint(symbols)
         return
     fig, ax = plt.subplots(figsize=(8, 5))
     if len(snr_a):
@@ -199,7 +230,8 @@ def save_evm_comparison_table(symbols: int = 5000) -> None:
         | set(mp_zf_q) | set(mp_zf_16) | set(mp_mmse_q) | set(mp_mmse_16)
     )
     if not all_snr:
-        print(f"No EVM CSV data for {symbols} symbols. Run simulations first.")
+        print(f"No EVM CSV data for {symbols} symbols.")
+        _print_evm_run_hint(symbols)
         return
 
     def fmt(evm: float | None) -> str:

@@ -3,7 +3,7 @@ config.py
 
 Simulation configuration and reproducibility.
 
-Centralizes parameters for BER and constellation runs so that
+Centralizes parameters for BER, EVM, and constellation runs so that
 experiments are reproducible and easy to vary for different scenarios.
 """
 

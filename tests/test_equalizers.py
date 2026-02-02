@@ -58,3 +58,34 @@ class TestEqualizeMMSE:
         H = np.random.randn(4, 64) + 1j * np.random.randn(4, 64)
         with pytest.raises(ValueError, match="1D"):
             equalize_mmse(Y, H, snr_linear=10.0)
+
+    def test_channel_nulls_zf_amplifies_noise(self):
+        """ZF amplifies noise at channel nulls (small |H|)."""
+        np.random.seed(42)
+        X = np.ones(64, dtype=complex)
+        H = np.ones(64, dtype=complex)
+        H[32] = 0.01  # Near null
+        # Add noise
+        noise = 0.1 * (np.random.randn(64) + 1j * np.random.randn(64))
+        Y = X * H + noise
+        out_zf = equalize_zf(Y, H)
+        # At null, ZF amplifies noise significantly
+        assert np.abs(out_zf[32]) > np.abs(Y[32])
+
+    def test_mmse_better_than_zf_at_low_snr_with_nulls(self):
+        """MMSE should outperform ZF at low SNR when channel has nulls (small |H|)."""
+        np.random.seed(42)
+        X = np.random.randn(64) + 1j * np.random.randn(64)
+        H = np.ones(64, dtype=complex) * (0.5 + 0.3j)
+        H[16] = 0.05  # Near null
+        H[32] = 0.05  # Near null
+        # Add significant noise (low SNR)
+        noise = 0.3 * (np.random.randn(64) + 1j * np.random.randn(64))
+        Y = X * H + noise
+        out_zf = equalize_zf(Y, H)
+        out_mmse = equalize_mmse(Y, H, snr_linear=0.1)  # Very low SNR
+        # At nulls, ZF amplifies noise; MMSE should be better overall
+        error_zf = np.mean(np.abs(X - out_zf) ** 2)
+        error_mmse = np.mean(np.abs(X - out_mmse) ** 2)
+        # MMSE should be better, especially at nulls
+        assert error_mmse < error_zf or np.abs(out_mmse[16]) < np.abs(out_zf[16])

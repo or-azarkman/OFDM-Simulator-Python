@@ -1,11 +1,13 @@
 """
 run_ber_and_constellation.py
 
-OFDM BER simulation and constellation visualization.
+OFDM BER and EVM simulation with constellation visualization.
 
 - Monte Carlo BER vs SNR for QPSK and 16-QAM
+- EVM (Error Vector Magnitude) vs SNR for QPSK and 16-QAM
 - Theoretical BER curves for validation
 - Constellation diagrams at selected SNRs
+- Channel impulse response (CIR) and frequency response (CFR) plots for multipath
 - Reproducible runs via config and random seed
 """
 
