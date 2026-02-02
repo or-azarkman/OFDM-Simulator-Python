@@ -13,7 +13,7 @@ This document tracks what is done and what remains optional for the OFDM simulat
 | **2** | ZF/MMSE equalizer | **Done** |
 | **3** | Simulation scripts (--channel, --equalize) | **Done** |
 | **4** | Config + docs | **Done** |
-| **5** | Lessons learned | **Done** (`docs/LESSONS_LEARNED.md`) |
+| **5** | Lessons learned | **Done** (`docs/lessons_learned.md`) |
 | **EVM** | Error Vector Magnitude | **Done** (`src/evm.py`, `results/summary/evm/`) |
 | **Pilots** | Pilot-based channel estimation | **Done** (`src/pilots.py`, `results/summary/pilots/`) |
 
@@ -27,7 +27,7 @@ This document tracks what is done and what remains optional for the OFDM simulat
 
 ### Phase A: Step 5 — Lessons learned (**done**)
 
-**Deliverable:** `docs/LESSONS_LEARNED.md` — technical notes on CP and circular convolution, BER vs spectral efficiency, modulation choice when BER/EVM is too high (step down for wider decision regions), equalization (ZF vs MMSE), validation (BER, EVM, constellations), pilot-based channel estimation. Limitations: ideal sync (no CFO/STO); no FEC. Future: CFO/STO, 64‑QAM, FEC.
+**Deliverable:** `docs/lessons_learned.md` — technical notes on CP and circular convolution, BER vs spectral efficiency, modulation choice when BER/EVM is too high (step down for wider decision regions), equalization (ZF vs MMSE), validation (BER, EVM, constellations), pilot-based channel estimation. Limitations: ideal sync (no CFO/STO); no FEC. Future: CFO/STO, 64‑QAM, FEC.
 
 ---
 

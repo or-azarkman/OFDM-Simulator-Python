@@ -1,6 +1,20 @@
 # Complete Run Guide — All Simulations and Plots
 
-This document provides a comprehensive checklist of all simulations and plots needed for a complete OFDM project demonstration. For mathematical foundations, modulation and EVM trade-offs, and engineering conclusions (e.g. when to step down to lower-order modulation for better EVM), see `docs/ofdm_overview.md` and `docs/LESSONS_LEARNED.md`.
+This document is the single reference for running simulations and tests. For mathematical foundations, modulation and EVM trade-offs, and engineering conclusions, see `docs/ofdm_overview.md` and `docs/lessons_learned.md`.
+
+---
+
+## Quick reference (main commands)
+
+| Action | Command |
+|--------|--------|
+| AWGN | `py run_simulation.py --symbols 5000` |
+| Multipath ZF/MMSE | `py run_simulation.py --channel multipath --equalize zf --symbols 5000` (or `--equalize mmse`) |
+| Multipath + pilots | `py run_simulation.py --channel multipath --equalize zf --pilots --symbols 5000` |
+| Comparison plots | `py simulations/plot_ber_comparison.py` ; `py simulations/plot_evm_comparison.py` ; `py simulations/plot_constellation_comparison.py` ; `py simulations/plot_pilots_comparison.py --symbols 5000 --equalize zf` (and `--equalize mmse`) |
+| Tests | `py -m pytest tests/ -v` |
+
+Outputs: `results/<N>_symbols*/` per run; summary in `results/summary/ber/`, `evm/`, `constellation/`, `pilots/`, `docs/`. Full checklist and all output paths below.
 
 ---
 
@@ -213,6 +227,6 @@ After completing all steps, you will have:
 
 **Total:** Multiple plots and data files per run and in summary (see Expected Output Files above for the full list).
 
-**Note:** To organize existing files in `results/summary/`, run: `py results/summary/ORGANIZE_EXISTING.py`
+**Note:** To organize existing files in `results/summary/`, run: `py results/summary/organize_existing.py`
 
 This provides a comprehensive demonstration of OFDM system performance, equalization techniques, and pilot-based channel estimation.

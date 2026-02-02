@@ -1,6 +1,6 @@
 # Lessons Learned — OFDM Simulator
 
-Short reflection on what was learned, current limitations, and planned improvements. Next-phase roadmap: `docs/NEXT_PHASE_PLAN.md`.
+Short reflection on what was learned, current limitations, and planned improvements. Next-phase roadmap: `docs/next_phase_plan.md`.
 
 ---
 
@@ -12,7 +12,7 @@ Short reflection on what was learned, current limitations, and planned improveme
 
 - **BER vs spectral efficiency:** QPSK is more robust to noise (lower BER at the same SNR) but carries fewer bits per symbol. 16-QAM doubles the bit rate per symbol at the cost of higher BER for the same SNR. The comparison table and BER vs SNR plots make this trade-off visible across AWGN and multipath scenarios.
 
-- **Modulation choice when BER or EVM is too high:** In real systems (3GPP, Wi‑Fi), if the chosen modulation yields BER or EVM above the link budget or standard mask, the designer **steps down to a lower-order modulation** (e.g. 64‑QAM → 16‑QAM → QPSK). Lower-order modulations have **wider decision regions** and fewer constellation points, so they tolerate more noise and channel/estimation error while meeting EVM and BER targets—at the cost of spectral efficiency. This is especially important for **64‑QAM and 256‑QAM**, where EVM requirements are strict and channel estimation errors have a larger impact; the simulator’s QPSK vs. 16‑QAM comparison illustrates the same principle.
+- **Modulation choice when BER or EVM is too high:** In real systems (3GPP, Wi‑Fi), if the chosen modulation yields BER or EVM above the link budget or standard mask, the designer **steps down to a lower-order modulation** (e.g. 64‑QAM → 16‑QAM → QPSK). Lower-order modulations have **wider decision regions** and fewer constellation points, so they tolerate more noise and channel/estimation error while meeting EVM and BER targets—at the cost of spectral efficiency. This is especially important for **64‑QAM and 256‑QAM**, where EVM requirements are strict and channel estimation errors have a larger impact; the simulator's QPSK vs. 16‑QAM comparison illustrates the same principle.
 
 - **Why equalization matters in multipath:** Without equalization, the frequency-selective channel distorts the constellation (amplitude and phase per subcarrier). BER stays high even when SNR increases (error floor), especially for 16-QAM. One-tap ZF or MMSE after FFT restores the constellation and brings BER down with SNR.
 
@@ -38,21 +38,9 @@ Short reflection on what was learned, current limitations, and planned improveme
 
 ---
 
-## Future improvements (planned or optional)
+## Future improvements
 
-In order of priority (see `docs/NEXT_PHASE_PLAN.md` for details):
-
-1. ~~**EVM (Error Vector Magnitude):**~~ **Done.** EVM computation and plots implemented (`src/evm.py`); EVM vs SNR per run; comparison plots and table in `results/summary/evm/`. EVM is a standard metric in 3GPP and Wi-Fi that complements BER by quantifying symbol-level accuracy.
-
-2. ~~**Pilots and channel estimation:**~~ **Done.** Pilot subcarrier insertion (`src/pilots.py`), LS channel estimation from pilots, integration into transmitter/receiver; comparison plots in `results/summary/pilots/`. When pilots are enabled, the receiver estimates H from pilots and uses it in ZF/MMSE equalization. Moves from “known channel” to “estimated channel.”
-
-3. **CFO (Carrier frequency offset):** Model phase drift (e.g. $$\exp(j \cdot 2\pi \cdot \Delta f \cdot n)$$), then correct using correlation with preamble or pilots. Document as a synchronization impairment and correction step.
-
-4. **STO (Symbol timing offset):** Model symbol delay, then detect and correct (e.g. using CP or preamble correlation). Complements CFO in a “sync” story.
-
-5. **64-QAM:** Optional; QPSK and 16-QAM already demonstrate the modulation and BER trade-off.
-
-6. **FEC:** Optional; larger scope. Can be listed as long-term future work.
+Optional next steps (status and priority): see **`docs/next_phase_plan.md`**. EVM and Pilots are done; CFO, STO (synchronization), 64‑QAM, and FEC are optional extensions.
 
 ---
 

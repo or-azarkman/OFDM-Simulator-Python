@@ -92,7 +92,7 @@ Increasing the number of OFDM symbols significantly improves constellation stabi
 - **16‑QAM** provides higher throughput but demands better channel conditions and is more sensitive to EVM and channel estimation errors.
 - When **BER or EVM is too high**, stepping down to a lower-order modulation (wider decision regions) is the standard way to meet EVM and BER targets—especially for precision applications and high-order QAM (64/256‑QAM).
 - Increasing the number of simulated symbols is essential for reliable BER and EVM analysis.
-- **Multipath:** Without equalization, multipath causes a high BER floor (especially for 16‑QAM); one-tap ZF or MMSE restores performance. ZF vs MMSE trade-off: see `docs/LESSONS_LEARNED.md`. The comparison table and constellation grid illustrate the scenarios.
+- **Multipath:** Without equalization, multipath causes a high BER floor (especially for 16‑QAM); one-tap ZF or MMSE restores performance. ZF vs MMSE trade-off: see `docs/lessons_learned.md`. The comparison table and constellation grid illustrate the scenarios.
 - **Pilot-based channel estimation:** Estimation errors degrade BER and EVM compared to perfect channel knowledge; at high SNR, pilot-based performance approaches known-channel. Channel estimation accuracy plots show the impact of interpolation between pilot positions.
 
 ---
@@ -103,7 +103,7 @@ Increasing the number of OFDM symbols significantly improves constellation stabi
 
 **Summary:** `results/summary/` — organized by metric: `ber/` (BER plots and tables), `evm/` (EVM plots and tables), `constellation/` (4×3 grid), `pilots/` (channel estimation accuracy and known vs pilot-based comparisons), `docs/` (this summary and run instructions). Key variables: `fft_size`, `cp_len`, `num_symbols`, `snr_range_db`, `monte_carlo_trials`, `channel_type`, `equalize`, `multipath_taps`, `use_pilots`.
 
-**Commands:** See `docs/RUN_AND_TEST.md`.
+**Commands:** See `docs/complete_run_guide.md`.
 
 ---
 

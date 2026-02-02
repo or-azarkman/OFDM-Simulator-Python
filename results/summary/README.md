@@ -36,7 +36,7 @@ results/summary/
 └── docs/                   # Summary documentation
     ├── simulation_summary.md
     ├── README.txt
-    └── RUN_COMPARISON.txt
+    └── run_comparison.txt
 ```
 
 ---
@@ -67,7 +67,7 @@ results/summary/
 ### Documentation (`docs/`)
 - **simulation_summary.md:** High-level summary of results and conclusions
 - **README.txt:** Brief overview of summary contents
-- **RUN_COMPARISON.txt:** Instructions for regenerating summary outputs
+- **run_comparison.txt:** Instructions for regenerating summary outputs
 
 ---
 
@@ -101,7 +101,7 @@ py simulations/plot_pilots_comparison.py --symbols 5000 --equalize mmse
 
 **To organize existing files** (if you have old files in `summary/` root):
 ```powershell
-py results/summary/ORGANIZE_EXISTING.py
+py results/summary/organize_existing.py
 ```
 
 ---
@@ -117,4 +117,4 @@ py results/summary/ORGANIZE_EXISTING.py
 
 **Total:** ~20 summary plots + 5 tables + documentation
 
-For complete instructions, see `docs/COMPLETE_RUN_GUIDE.md`. For technical background (formulas, modulation trade-offs, EVM and BER interpretation, when to step down to lower-order modulation for better EVM), see `docs/ofdm_overview.md` and `docs/LESSONS_LEARNED.md`.
+For complete instructions, see `docs/complete_run_guide.md`. For technical background (formulas, modulation trade-offs, EVM and BER interpretation, when to step down to lower-order modulation for better EVM), see `docs/ofdm_overview.md` and `docs/lessons_learned.md`.
