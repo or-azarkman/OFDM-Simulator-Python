@@ -36,6 +36,8 @@ cases:
       modulation: QPSK
       snr_db: 20.0
       cfo_subcarrier_fraction: 0.04
+      # Known-CFO removal (genie) — inverse phase ramp before FFT/demod
+      cfo_correction: true
     thresholds:
       max_evm_percent: 48.0
       max_ber: 0.1

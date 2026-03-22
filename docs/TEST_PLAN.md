@@ -36,7 +36,7 @@ Defined per case in `configs/validation/*.yaml`:
 
 **Global pass:** Smoke = single scenario all checks pass; Matrix = **all** cases pass.
 
-**Matrix note (CFO):** The default case `cfo_mild_qpsk` applies **CFO impairment** while the receiver path **does not yet perform CFO correction**. Without correction, EVM can be very high and BER can approach **0.5** (random decisions) — so this case may **FAIL** until CFO correction is implemented or the scenario/thresholds are relaxed. Baseline AWGN cases without CFO are expected to **PASS**.
+**Matrix note (CFO):** Set **`cfo_correction: true`** in the scenario to apply **known-CFO** inverse phase ramp (genie / oracle) before FFT/demod — suitable for validation bounds and for a **PASS** on the default `cfo_mild_qpsk` case. With **`cfo_correction: false`** (or omitted), CFO is **not** removed; EVM can be very high and BER can approach **0.5**. A future step is **estimated** CFO (CP/pilots) instead of oracle.
 
 ---
 

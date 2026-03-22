@@ -72,6 +72,7 @@ def main() -> int:
         cfo = float(sc.get("cfo_subcarrier_fraction", 0.0))
         seed = sc.get("seed", 42)
         seed = int(seed) if seed is not None else None
+        cfo_correction = bool(sc.get("cfo_correction", False))
 
         metrics = measure_awgn_cfo_once(
             fft_size=fft_size,
@@ -81,6 +82,7 @@ def main() -> int:
             snr_db=snr_db,
             cfo_subcarrier_fraction=cfo,
             seed=seed,
+            cfo_correction=cfo_correction,
         )
         report, margins = evaluate_metrics_with_margins(metrics, spec)
         all_pass = all_pass and report.passed
@@ -92,6 +94,7 @@ def main() -> int:
             "ber": metrics["ber"],
             "snr_db": metrics["snr_db"],
             "cfo_subcarrier_fraction": metrics["cfo_subcarrier_fraction"],
+            "cfo_correction": metrics.get("cfo_correction", 0.0),
             "tx_power_db": metrics["tx_power_db"],
             "rx_power_db": metrics["rx_power_db"],
             "evm_limit_pct": margins.get("evm_limit_pct", ""),
@@ -113,6 +116,7 @@ def main() -> int:
         "ber",
         "snr_db",
         "cfo_subcarrier_fraction",
+        "cfo_correction",
         "tx_power_db",
         "rx_power_db",
         "evm_limit_pct",

@@ -59,6 +59,7 @@ def main() -> int:
     cfo = float(sc.get("cfo_subcarrier_fraction", 0.0))
     seed = sc.get("seed", 42)
     seed = int(seed) if seed is not None else None
+    cfo_correction = bool(sc.get("cfo_correction", False))
 
     metrics = measure_awgn_cfo_once(
         fft_size=fft_size,
@@ -68,6 +69,7 @@ def main() -> int:
         snr_db=snr_db,
         cfo_subcarrier_fraction=cfo,
         seed=seed,
+        cfo_correction=cfo_correction,
     )
 
     report = evaluate_metrics(metrics, spec)

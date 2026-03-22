@@ -7,9 +7,10 @@ not for a full RF circuit simulator.
 """
 
 from src.rf_impairments.chain import RFImpairmentChain
-from src.rf_impairments.cfo import apply_cfo_to_ofdm_stream
+from src.rf_impairments.cfo import apply_cfo_to_ofdm_stream, remove_cfo_from_ofdm_stream
 
 __all__ = [
     "RFImpairmentChain",
     "apply_cfo_to_ofdm_stream",
+    "remove_cfo_from_ofdm_stream",
 ]

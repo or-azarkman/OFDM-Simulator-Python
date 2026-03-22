@@ -220,4 +220,4 @@ MIT License.
 
 ## Notes
 
-OFDM PHY-layer simulation. Mathematical details: `docs/ofdm_overview.md`. Lessons learned, limitations, and future work: `docs/lessons_learned.md`. Next phase / roadmap: `docs/next_phase_plan.md`. **RF validation:** `docs/VALIDATION_OVERVIEW.md`, **`docs/TEST_PLAN.md`**, `docs/VALIDATION_REPORT_EXAMPLE.md`. **Hebrew project status brief:** `docs/project_status_brief_hebrew.md`.
+OFDM PHY-layer simulation. Mathematical details: `docs/ofdm_overview.md`. Lessons learned, limitations, and future work: `docs/lessons_learned.md`. Next phase / roadmap: `docs/next_phase_plan.md`. **RF extensions (ordered steps):** `docs/RF_ROADMAP.md`. **RF validation:** `docs/VALIDATION_OVERVIEW.md`, **`docs/TEST_PLAN.md`**, `docs/VALIDATION_REPORT_EXAMPLE.md`. **Hebrew project status brief:** `docs/project_status_brief_hebrew.md`.

@@ -37,6 +37,7 @@ def load_matrix_cases(path: str | Path) -> tuple[dict[str, Any], list[MatrixCase
               modulation: QPSK
               snr_db: 18
               cfo_subcarrier_fraction: 0.0
+              cfo_correction: false   # optional: true = known CFO inverse on RX (validation)
             thresholds:
               max_evm_percent: 25.0
 

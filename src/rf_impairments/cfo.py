@@ -43,3 +43,35 @@ def apply_cfo_to_ofdm_stream(
     # Phase increment per sample: 2*pi * eps / N (one subcarrier spacing = 1/N)
     phase = 2.0 * np.pi * float(cfo_subcarrier_fraction) * n / float(fft_size)
     return (flat * np.exp(1j * phase)).reshape(original_shape)
+
+
+def remove_cfo_from_ofdm_stream(
+    ofdm_stream: np.ndarray,
+    fft_size: int,
+    cfo_subcarrier_fraction: float,
+) -> np.ndarray:
+    """
+    Remove CFO by applying the **inverse** phase ramp of :func:`apply_cfo_to_ofdm_stream`.
+
+    This is appropriate when the CFO value is **known** (e.g. validation / genie bounds)
+    or after an estimator returns ``cfo_subcarrier_fraction``.
+
+    Args:
+        ofdm_stream: Same shape conventions as ``apply_cfo_to_ofdm_stream``.
+        fft_size: IFFT size (subcarriers).
+        cfo_subcarrier_fraction: CFO relative to subcarrier spacing (same sign as applied).
+
+    Returns:
+        Time-domain samples with CFO rotation removed (up to numerical noise).
+    """
+    if fft_size <= 0:
+        raise ValueError("fft_size must be positive")
+    x = np.asarray(ofdm_stream, dtype=complex)
+    if x.size == 0:
+        return x
+
+    original_shape = x.shape
+    flat = x.reshape(-1)
+    n = np.arange(flat.size, dtype=float)
+    phase = 2.0 * np.pi * float(cfo_subcarrier_fraction) * n / float(fft_size)
+    return (flat * np.exp(-1j * phase)).reshape(original_shape)
