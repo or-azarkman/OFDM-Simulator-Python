@@ -38,6 +38,9 @@ Thumbs.db
 # Accidental / local files
 tore .
 
+# Local notes / terminal scratch (not for version control)
+הרצה ב TERMINAL.txt
+
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb
@@ -46,6 +49,8 @@ tore .
 docs/IMPLEMENTATION_PLAN.md
 docs/INTERVIEWER_EVALUATION.md
 docs/DOCUMENTATION_RATINGS.md
+docs/parameters_and_models_guide_hebrew.md
+docs/project_guide_hebrew.md
 
 # Local overrides (keep results in git for portfolio)
 # results/

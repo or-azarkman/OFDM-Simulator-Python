@@ -93,3 +93,39 @@ def multipath_channel(
     if squeeze:
         out = out.flatten()
     return awgn_channel(out, snr_db)
+
+
+def multipath_channel_linear(
+    signal: np.ndarray,
+    taps: Union[Sequence[complex], np.ndarray],
+    snr_db: float,
+    cp_len: int,
+    n_fft: int,
+) -> np.ndarray:
+    """
+    Multipath channel with true linear convolution over the full stream.
+    When CP is shorter than the channel delay spread, the receiver's
+    "useful" window contains ISI from the previous symbol, so BER/EVM degrade.
+
+    Signal is (n_symbols, n_fft + cp_len). Output is (n_symbols, n_fft).
+    Taps are normalized to unit energy.
+    """
+    taps = np.asarray(taps, dtype=complex)
+    taps = taps / np.sqrt(np.sum(np.abs(taps) ** 2))
+    if signal.ndim == 1:
+        signal = signal.reshape(1, -1)
+        squeeze = True
+    else:
+        squeeze = False
+    n_sym, full_len = signal.shape
+    assert full_len == n_fft + cp_len, "full_len must equal n_fft + cp_len"
+    stream_flat = signal.flatten()
+    conv_out = np.convolve(stream_flat, taps, mode="full")
+    sym_len = n_fft + cp_len
+    out = np.zeros((n_sym, n_fft), dtype=complex)
+    for i in range(n_sym):
+        start = i * sym_len + cp_len
+        out[i] = conv_out[start : start + n_fft]
+    if squeeze:
+        out = out.flatten()
+    return awgn_channel(out, snr_db)
