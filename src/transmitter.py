@@ -167,6 +167,8 @@ def add_cyclic_prefix(time_signal: np.ndarray, cp_len: int) -> np.ndarray:
     Returns:
         np.ndarray: OFDM symbol with cyclic prefix.
     """
+    if cp_len <= 0:
+        return time_signal
     cp = time_signal[-cp_len:]
     return np.concatenate([cp, time_signal])
 

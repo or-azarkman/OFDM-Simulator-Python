@@ -29,6 +29,10 @@ py simulations/plot_constellation_comparison.py
 py simulations/plot_evm_comparison.py
 py simulations/plot_pilots_comparison.py  # Known channel vs Pilot-based estimation
 
+# EVM/BER vs CP length (LinkedIn-style plot)
+py run_cp_sweep.py
+py run_cp_sweep.py --snr 12 --trials 40 --cp 0 2 4 8 12 16 24
+
 # Run tests
 py -m pytest tests/ -v
 ```
