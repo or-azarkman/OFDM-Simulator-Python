@@ -1,0 +1,15 @@
+# Smoke validation — AWGN + optional CFO (no correction).
+# Tune thresholds after you baseline EVM/BER for your scenario.
+
+thresholds:
+  max_evm_percent: 25.0
+  max_ber: 0.02
+
+scenario:
+  fft_size: 64
+  cp_len: 16
+  num_symbols: 400
+  modulation: QPSK
+  snr_db: 18.0
+  cfo_subcarrier_fraction: 0.0
+  seed: 42

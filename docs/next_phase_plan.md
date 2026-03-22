@@ -4,6 +4,23 @@ This document tracks what is done and what remains optional for the OFDM simulat
 
 ---
 
+## 0. RF Validation & Test Platform (new direction — `rf-validation-layer`)
+
+**Goal:** Treat the simulator as a **validation harness**: impairments → measurements → requirements (YAML) → **PASS/FAIL** → JSON reports (and later sweeps / CI).
+
+| Item | Status |
+|------|--------|
+| Package layout: `src/rf_impairments/`, `src/measurements/`, `src/validation/` | **Started** |
+| CFO impairment (digital baseband, no correction in Phase 1) | **Done** |
+| YAML thresholds + smoke runner `simulations/validation_runs/run_validation_smoke.py` | **Done** |
+| Overview doc | **`docs/VALIDATION_OVERVIEW.md`** |
+| Phase noise, PA nonlinearity, noise figure, CFO correction, STO | Planned |
+| Automated sweep matrices + Test Plan / Report templates | Planned |
+
+Legacy OFDM tutorial flow (`run_simulation.py`, BER/EVM plots) remains; validation is an **additional** entry point.
+
+---
+
 ## 1. Status confirmation
 
 | Step | Description | Status |
