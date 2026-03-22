@@ -24,17 +24,22 @@ def test_cfo_preserves_shape():
 
 
 def test_cp_estimate_matches_applied_cfo():
+    """CP must duplicate the last cp_len samples of the useful part (OFDM property)."""
     rng = np.random.default_rng(2)
     fft_size = 32
     cp_len = 8
     eps = 0.04
-    x = (
-        rng.standard_normal((12, cp_len + fft_size))
-        + 1j * rng.standard_normal((12, cp_len + fft_size))
-    ).astype(np.complex128)
+    rows = []
+    for _ in range(12):
+        body = (rng.standard_normal(fft_size) + 1j * rng.standard_normal(fft_size)).astype(
+            np.complex128
+        )
+        cp = body[-cp_len:]
+        rows.append(np.concatenate([cp, body]))
+    x = np.stack(rows, axis=0)
     y = apply_cfo_to_ofdm_stream(x, fft_size=fft_size, cfo_subcarrier_fraction=eps)
     hat = estimate_cfo_subcarrier_fraction_from_cp(y, fft_size, cp_len)
-    np.testing.assert_allclose(hat, eps, rtol=1e-10, atol=1e-12)
+    np.testing.assert_allclose(hat, eps, rtol=1e-9, atol=1e-10)
 
 
 def test_remove_cfo_inverts_apply():

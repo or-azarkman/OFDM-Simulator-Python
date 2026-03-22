@@ -86,10 +86,9 @@ def estimate_cfo_subcarrier_fraction_from_cp(
     Moose-style CFO estimate from cyclic-prefix self-similarity.
 
     For each OFDM symbol, the CP is a copy of the last ``cp_len`` samples of the
-    useful part. With CFO, the phase difference between CP samples and their
-    copies ``fft_size`` samples later is approximately ``2*pi*eps`` (one useful
-    interval), so ``eps_hat = angle(R) / (2*pi)`` where ``R`` is the summed
-    correlation across CP positions (optionally averaged over symbols).
+    useful part. With CFO, the tail is advanced in phase by ``2*pi*eps`` over
+    one useful interval (``fft_size`` samples). Use **``sum(conj(CP) * tail)``**
+    so that ``angle(R) ≈ +2*pi*eps`` (same sign as :func:`apply_cfo_to_ofdm_stream`).
 
     Args:
         ofdm_stream: Shape ``(n_symbols, cp_len + fft_size)`` or 1D flattened
@@ -128,7 +127,10 @@ def estimate_cfo_subcarrier_fraction_from_cp(
 
     acc = 0.0j
     for row in x:
-        acc += np.sum(row[0:cp_len] * np.conj(row[fft_size : fft_size + cp_len]))
+        # conj(CP) * tail — tail is later in time, larger phase; matches +eps convention
+        acc += np.sum(
+            np.conj(row[0:cp_len]) * row[fft_size : fft_size + cp_len]
+        )
 
     phi = float(np.angle(acc))
     return phi / (2.0 * np.pi)
