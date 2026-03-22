@@ -9,11 +9,12 @@ This file complements `docs/next_phase_plan.md` with a **sequential** checklist 
 | Step | What | Status |
 |------|------|--------|
 | 1 | CFO **impairment** (`apply_cfo_to_ofdm_stream`) | Done |
-| 2 | **Known-CFO removal** (`remove_cfo_from_ofdm_stream`) + YAML flag `cfo_correction: true` | Done |
-| 3 | **Estimated CFO** (optional next): CP correlation or pilot-based phase difference between symbols → feed `remove_cfo_from_ofdm_stream` with estimated ε (not oracle) | Planned |
-| 4 | Document **limits**: genie = upper bound; estimator = realistic RF test narrative | Ongoing |
+| 2 | **Known-CFO removal** (`remove_cfo_from_ofdm_stream`) + YAML `cfo_correction_mode: genie` (legacy: `cfo_correction: true`) | Done |
+| 3 | **CP-based CFO estimate** (`estimate_cfo_subcarrier_fraction_from_cp`) + YAML `cfo_correction_mode: cp` | Done |
+| 4 | Pilot-based CFO / residual tracking (optional refinement) | Planned |
+| 5 | Document **limits**: genie = upper bound; CP estimate = blind sync narrative | Ongoing |
 
-**Be ready for step 3:** review CP structure in `src/transmitter.py` / `receiver.py`, and how pilots are placed (`src/pilots.py`).
+**Next:** pilot-based CFO refinement (optional) — see `src/pilots.py` and CP structure in `src/transmitter.py` / `receiver.py`.
 
 ---
 

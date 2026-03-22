@@ -2,12 +2,14 @@
 Single-shot OFDM measurements for validation (AWGN + optional CFO).
 
 Reference TX symbols for EVM are taken from the **ideal** transmitted stream
-(no CFO). With ``cfo_correction=True``, the RX applies a **known-CFO** inverse
-ramp (genie / oracle) before demodulation, so EVM/BER reflect residual after
-ideal CFO removal (plus AWGN), not uncorrected rotation.
+(no CFO). With ``cfo_correction_mode="genie"``, the RX applies a **known-CFO**
+inverse ramp. With ``"cp"``, CFO is **estimated** from CP correlation (Moose-style)
+then removed. Otherwise no CFO correction.
 """
 
 from __future__ import annotations
+
+from typing import Any, Mapping
 
 import numpy as np
 
@@ -20,8 +22,29 @@ from src.receiver import (
     remove_cyclic_prefix,
 )
 from src.measurements.power import average_power_db, average_power_linear
-from src.rf_impairments.cfo import apply_cfo_to_ofdm_stream, remove_cfo_from_ofdm_stream
+from src.rf_impairments.cfo import (
+    apply_cfo_to_ofdm_stream,
+    estimate_cfo_subcarrier_fraction_from_cp,
+    remove_cfo_from_ofdm_stream,
+)
 from src.transmitter import generate_ofdm_stream, generate_random_bits
+
+
+def parse_cfo_correction_mode(scenario: Mapping[str, Any]) -> str:
+    """
+    YAML scenario keys:
+
+    - ``cfo_correction_mode``: ``none`` | ``genie`` | ``cp`` (preferred)
+    - Legacy: ``cfo_correction: true`` → ``genie``
+    """
+    raw = scenario.get("cfo_correction_mode")
+    if isinstance(raw, str):
+        m = raw.strip().lower()
+        if m in ("none", "genie", "cp"):
+            return m
+    if scenario.get("cfo_correction") is True:
+        return "genie"
+    return "none"
 
 
 def measure_awgn_cfo_once(
@@ -33,23 +56,28 @@ def measure_awgn_cfo_once(
     snr_db: float,
     cfo_subcarrier_fraction: float,
     seed: int | None = 42,
-    cfo_correction: bool = False,
+    cfo_correction_mode: str = "none",
 ) -> dict[str, float]:
     """
     One Monte Carlo draw: BER and EVM after AWGN, optional CFO.
 
-    If ``cfo_correction`` is True and CFO is non-zero, applies **known-CFO**
-    removal on the noisy time-domain stream (inverse phase ramp), then demodulates.
-    This models perfect CFO knowledge (validation upper bound); real receivers use
-    CP/pilot-based estimation instead.
+    ``cfo_correction_mode``:
+      - ``none`` — no CFO removal (default).
+      - ``genie`` — use true ``cfo_subcarrier_fraction`` (oracle bound).
+      - ``cp`` — estimate CFO from CP self-correlation, then remove.
 
     Returns:
         dict with keys: evm_percent, ber, snr_db, cfo_subcarrier_fraction,
-        cfo_correction (0.0 or 1.0),
+        cfo_correction (0.0 or 1.0 if any correction applied),
+        cfo_correction_mode (0=none, 1=genie, 2=cp),
+        cfo_estimated_subcarrier_fraction (NaN or estimate when mode is cp),
         tx_power_linear, tx_power_db, rx_power_linear, rx_power_db
         (TX power on the OFDM stream **before** CFO; RX power on **noisy** time signal
         **before** CFO removal — i.e. at the channel output)
     """
+    mode = (cfo_correction_mode or "none").strip().lower()
+    if mode not in ("none", "genie", "cp"):
+        raise ValueError(f"Invalid cfo_correction_mode: {cfo_correction_mode!r}")
     if seed is not None:
         np.random.seed(seed)
 
@@ -75,10 +103,18 @@ def measure_awgn_cfo_once(
     rx_power_linear = average_power_linear(noisy)
     rx_power_db = average_power_db(noisy)
 
-    if cfo_correction and cfo_subcarrier_fraction != 0.0:
-        noisy = remove_cfo_from_ofdm_stream(
-            noisy, fft_size, cfo_subcarrier_fraction
-        )
+    eps_hat: float | None = None
+    if cfo_subcarrier_fraction != 0.0:
+        if mode == "genie":
+            noisy = remove_cfo_from_ofdm_stream(
+                noisy, fft_size, cfo_subcarrier_fraction
+            )
+        elif mode == "cp":
+            eps_est = estimate_cfo_subcarrier_fraction_from_cp(
+                noisy, fft_size, cp_len
+            )
+            eps_hat = float(eps_est)
+            noisy = remove_cfo_from_ofdm_stream(noisy, fft_size, eps_hat)
 
     ofdm_no_cp = remove_cyclic_prefix(noisy, cp_len)
     freq_rx = fft_ofdm(ofdm_no_cp)
@@ -93,12 +129,19 @@ def measure_awgn_cfo_once(
         )
     )
 
+    corrected = (
+        cfo_subcarrier_fraction != 0.0 and mode in ("genie", "cp")
+    )
+    mode_code = {"none": 0.0, "genie": 1.0, "cp": 2.0}[mode]
+
     return {
         "evm_percent": evm,
         "ber": ber,
         "snr_db": float(snr_db),
         "cfo_subcarrier_fraction": float(cfo_subcarrier_fraction),
-        "cfo_correction": 1.0 if (cfo_correction and cfo_subcarrier_fraction != 0.0) else 0.0,
+        "cfo_correction": 1.0 if corrected else 0.0,
+        "cfo_correction_mode": mode_code,
+        "cfo_estimated_subcarrier_fraction": eps_hat,
         "tx_power_linear": tx_power_linear,
         "tx_power_db": tx_power_db,
         "rx_power_linear": rx_power_linear,

@@ -11,13 +11,13 @@ This document tracks what is done and what remains optional for the OFDM simulat
 | Item | Status |
 |------|--------|
 | Package layout: `src/rf_impairments/`, `src/measurements/`, `src/validation/` | **Done** |
-| CFO impairment + **known-CFO removal** (YAML `cfo_correction`) | **Done** |
+| CFO impairment + **genie / CP** CFO (`cfo_correction_mode`, legacy `cfo_correction`) | **Done** |
 | YAML thresholds + smoke runner `run_validation_smoke.py` | **Done** |
 | **Test matrix** + CSV + margins + `run_validation_matrix.py` | **Done** |
 | **Average power** (dB ref. unity mean \|x\|²) in measurements | **Done** |
 | **Test Plan** + example validation report | **`docs/TEST_PLAN.md`**, **`docs/VALIDATION_REPORT_EXAMPLE.md`** |
 | Overview | **`docs/VALIDATION_OVERVIEW.md`** |
-| Phase noise, PA nonlinearity, noise figure, **CFO estimation** (vs oracle), STO | Planned |
+| Phase noise, PA nonlinearity, noise figure, pilot-based CFO refinement, STO | Planned |
 | CI (GitHub Actions) running `pytest` + matrix | Optional |
 | Merge validation work to `main` (local fast-forward + `git push origin main`) | **Done** (as of merge bringing `1e1bf46` to `main`) |
 
@@ -40,7 +40,7 @@ Legacy OFDM tutorial flow (`run_simulation.py`, BER/EVM plots) remains; validati
 
 **Step 0 — Branch workflow (Documented):** The project uses Git branches for features (e.g. `feature/pilots`); the workflow is documented here and in the README (clone, branch, run, push). No separate "branch workflow" deliverable is required; the status means the process is defined and ready to use.
 
-**Current state:** Steps 1–5, EVM, and Pilots are complete. **CFO:** impairment + validation integration **done**; **CFO correction** in RX still optional next. **STO** (synchronization); 64‑QAM and FEC remain optional.
+**Current state:** Steps 1–5, EVM, and Pilots are complete. **CFO:** impairment + **genie / CP** correction in validation harness **done**. **STO** (synchronization); 64‑QAM and FEC remain optional.
 
 ---
 
@@ -58,7 +58,7 @@ Legacy OFDM tutorial flow (`run_simulation.py`, BER/EVM plots) remains; validati
 |-----------|-------------|--------|--------|--------|
 | **EVM** | Error Vector Magnitude — standard metric (3GPP, Wi-Fi); symbol-level accuracy | Low | High | **Done.** `src/evm.py`; EVM vs SNR per run; comparison plots and table in `results/summary/evm/`. |
 | **Pilots** | Pilot subcarriers + LS channel estimation; known vs estimated channel | Medium | High | **Done.** `src/pilots.py`; pattern, insertion, LS estimation; integrated in TX/RX; comparison plots in `results/summary/pilots/`. |
-| **CFO** | Carrier frequency offset: **impairment** — **done**; **known-CFO removal** (`remove_cfo_from_ofdm_stream`, YAML `cfo_correction`) — **done**; **estimated** CFO (CP/pilots) — **next** for realistic RX. | Medium | High | Oracle **done**; estimator **planned**. |
+| **CFO** | **Impairment** — **done**; **genie** + **CP** CFO estimate + removal (`cfo_correction_mode`) — **done**; pilot-based refinement — optional. | Medium | High | CP **done**; pilots optional. |
 | **STO** | Symbol timing offset + coarse/fine sync (e.g. CP or preamble correlation) | Medium–High | High | Optional. Complements CFO. |
 | 64-QAM | Higher-order modulation (QPSK and 16-QAM already in place) | Low | Medium | Optional. |
 | FEC | Forward error correction (e.g. convolutional, LDPC) | High | High | Optional; larger scope. |

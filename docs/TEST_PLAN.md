@@ -36,7 +36,13 @@ Defined per case in `configs/validation/*.yaml`:
 
 **Global pass:** Smoke = single scenario all checks pass; Matrix = **all** cases pass.
 
-**Matrix note (CFO):** Set **`cfo_correction: true`** in the scenario to apply **known-CFO** inverse phase ramp (genie / oracle) before FFT/demod — suitable for validation bounds and for a **PASS** on the default `cfo_mild_qpsk` case. With **`cfo_correction: false`** (or omitted), CFO is **not** removed; EVM can be very high and BER can approach **0.5**. A future step is **estimated** CFO (CP/pilots) instead of oracle.
+**Matrix note (CFO):** Use **`cfo_correction_mode`** in the scenario:
+
+- **`none`** — no CFO removal (uncorrected CFO can drive BER ~0.5).
+- **`genie`** — known CFO (oracle); legacy **`cfo_correction: true`** maps to this.
+- **`cp`** — **CP-based CFO estimate** (Moose-style), then inverse ramp (realistic blind sync).
+
+Measured **`cfo_estimated_subcarrier_fraction`** appears in matrix CSV when mode is **`cp`**.
 
 ---
 

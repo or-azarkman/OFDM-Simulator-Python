@@ -3,7 +3,11 @@
 import numpy as np
 import pytest
 
-from src.rf_impairments.cfo import apply_cfo_to_ofdm_stream, remove_cfo_from_ofdm_stream
+from src.rf_impairments.cfo import (
+    apply_cfo_to_ofdm_stream,
+    estimate_cfo_subcarrier_fraction_from_cp,
+    remove_cfo_from_ofdm_stream,
+)
 
 
 def test_cfo_zero_is_identity():
@@ -17,6 +21,20 @@ def test_cfo_preserves_shape():
     x = np.ones((3, 16), dtype=complex)
     y = apply_cfo_to_ofdm_stream(x, fft_size=8, cfo_subcarrier_fraction=0.01)
     assert y.shape == x.shape
+
+
+def test_cp_estimate_matches_applied_cfo():
+    rng = np.random.default_rng(2)
+    fft_size = 32
+    cp_len = 8
+    eps = 0.04
+    x = (
+        rng.standard_normal((12, cp_len + fft_size))
+        + 1j * rng.standard_normal((12, cp_len + fft_size))
+    ).astype(np.complex128)
+    y = apply_cfo_to_ofdm_stream(x, fft_size=fft_size, cfo_subcarrier_fraction=eps)
+    hat = estimate_cfo_subcarrier_fraction_from_cp(y, fft_size, cp_len)
+    np.testing.assert_allclose(hat, eps, rtol=1e-10, atol=1e-12)
 
 
 def test_remove_cfo_inverts_apply():

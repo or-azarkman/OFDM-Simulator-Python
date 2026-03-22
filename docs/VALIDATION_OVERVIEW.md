@@ -21,7 +21,7 @@ Transmitter → RF impairments (baseband models) → Channel → Receiver → Me
 | Runs | `simulations/validation_runs/` | `run_validation_smoke.py` (JSON); **`run_validation_matrix.py`** (CSV + JSON summary) |
 | Docs | `docs/` | **`TEST_PLAN.md`**, **`VALIDATION_REPORT_EXAMPLE.md`** |
 
-**Next (later phases):** CFO **estimation** (CP/pilots) beyond known-CFO removal; phase noise; PA nonlinearity; STO; CI on GitHub Actions (optional). See **`docs/RF_ROADMAP.md`**.
+**Next (later phases):** pilot-based CFO refinement (optional); phase noise; PA nonlinearity; STO; CI on GitHub Actions (optional). CP CFO estimate is available via **`cfo_correction_mode: cp`**. See **`docs/RF_ROADMAP.md`**.
 
 ---
 

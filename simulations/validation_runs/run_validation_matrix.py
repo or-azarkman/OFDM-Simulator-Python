@@ -51,7 +51,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    from src.measurements.ofdm_metrics import measure_awgn_cfo_once
+    from src.measurements.ofdm_metrics import measure_awgn_cfo_once, parse_cfo_correction_mode
     from src.validation.evaluate import evaluate_metrics_with_margins
     from src.validation.matrix_config import load_matrix_cases
 
@@ -72,7 +72,7 @@ def main() -> int:
         cfo = float(sc.get("cfo_subcarrier_fraction", 0.0))
         seed = sc.get("seed", 42)
         seed = int(seed) if seed is not None else None
-        cfo_correction = bool(sc.get("cfo_correction", False))
+        cfo_mode = parse_cfo_correction_mode(sc)
 
         metrics = measure_awgn_cfo_once(
             fft_size=fft_size,
@@ -82,11 +82,12 @@ def main() -> int:
             snr_db=snr_db,
             cfo_subcarrier_fraction=cfo,
             seed=seed,
-            cfo_correction=cfo_correction,
+            cfo_correction_mode=cfo_mode,
         )
         report, margins = evaluate_metrics_with_margins(metrics, spec)
         all_pass = all_pass and report.passed
 
+        est_cfo = metrics.get("cfo_estimated_subcarrier_fraction")
         row: dict[str, object] = {
             "case_id": mc.case_id,
             "pass": report.passed,
@@ -95,6 +96,10 @@ def main() -> int:
             "snr_db": metrics["snr_db"],
             "cfo_subcarrier_fraction": metrics["cfo_subcarrier_fraction"],
             "cfo_correction": metrics.get("cfo_correction", 0.0),
+            "cfo_correction_mode": metrics.get("cfo_correction_mode", 0.0),
+            "cfo_estimated_subcarrier_fraction": ""
+            if est_cfo is None
+            else est_cfo,
             "tx_power_db": metrics["tx_power_db"],
             "rx_power_db": metrics["rx_power_db"],
             "evm_limit_pct": margins.get("evm_limit_pct", ""),
@@ -117,6 +122,8 @@ def main() -> int:
         "snr_db",
         "cfo_subcarrier_fraction",
         "cfo_correction",
+        "cfo_correction_mode",
+        "cfo_estimated_subcarrier_fraction",
         "tx_power_db",
         "rx_power_db",
         "evm_limit_pct",

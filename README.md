@@ -45,6 +45,7 @@ py simulations/validation_runs/run_validation_smoke.py --config configs/validati
 # Validation matrix (multiple cases → CSV + summary JSON; exit 0 only if all cases PASS)
 py simulations/validation_runs/run_validation_matrix.py
 py simulations/validation_runs/run_validation_matrix.py --config configs/validation/test_matrix_default.yaml
+# In YAML scenarios: cfo_correction_mode: none | genie | cp (legacy: cfo_correction: true → genie)
 ```
 
 **Linux/macOS** (if `python` or `python3` is in PATH): use `pip install -r requirements.txt`, `python run_simulation.py`, `pytest tests/ -v`.

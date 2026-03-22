@@ -54,13 +54,13 @@
 
 - **`py -m pytest`** — כל הבדיקות עוברות.
 - **Smoke validation** — בדרך כלל **PASS**.
-- **מטריצה** — עם `cfo_correction: true` במקרה `cfo_mild_qpsk`, **תיקון CFO ידוע (genie)** מופעל ב־RX לפני המודולציה — המטריצה אמורה **לעבור** (או בדוק לפי `configs/validation/test_matrix_default.yaml`). בלי תיקון, מקרה CFO ב־RX עלול **להיכשל** — זה **צפוי**; ראה `docs/TEST_PLAN.md`.
+- **מטריצה** — במקרה `cfo_mild_qpsk` מוגדר `cfo_correction_mode: cp` (אומד CFO מ־CP, לא oracle). אפשר גם `genie` או `none`; ראה `docs/TEST_PLAN.md`.
 
 ---
 
 ## השלב הבא במסלול RF (פיתוח)
 
-1. **הערכת CFO** (CP / פיילוטים) במקום oracle — סיפור RF “אמיתי”.  
+1. **אומד CFO מ־CP** — **בוצע** (`cfo_correction_mode: cp`). אופציונלי: פיילוטים / מעקב שיורי.  
 2. **רעש פאזה** → **סנכרון זמן (STO)** → (אופציונלי) PA, CI.  
 3. פירוט מסודר: `docs/RF_ROADMAP.md`.
 
