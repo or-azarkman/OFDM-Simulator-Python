@@ -10,59 +10,74 @@ This document describes the **validation layer** added on top of the existing OF
 Transmitter → RF impairments (baseband models) → Channel → Receiver → Measurements → Validation (PASS/FAIL)
 ```
 
-**Current implementation (Phase 1):**
+**Current implementation:**
 
 | Layer | Location | Status |
 |--------|-----------|--------|
 | RF impairments | `src/rf_impairments/` | CFO (digital phase ramp); composable `RFImpairmentChain` |
-| Measurements | `src/measurements/` | `measure_awgn_cfo_once` — EVM + BER, AWGN + optional CFO (no CFO correction) |
-| Validation | `src/validation/` | YAML thresholds → `evaluate_metrics` → `ValidationReport` |
-| Config | `configs/validation/*.yaml` | Example: `default_smoke.yaml` |
-| Runs | `simulations/validation_runs/` | `run_validation_smoke.py` → JSON under `results/validation/` |
+| Measurements | `src/measurements/` | `measure_awgn_cfo_once` — EVM, BER, **TX/RX average power (dB ref. unity mean \|x\|²)**; AWGN + optional CFO (no CFO correction yet) |
+| Validation | `src/validation/` | YAML thresholds → `evaluate_metrics` / **`evaluate_metrics_with_margins`** → `ValidationReport`; **`load_matrix_cases`** for multi-case YAML |
+| Config | `configs/validation/*.yaml` | `default_smoke.yaml` (single scenario); **`test_matrix_default.yaml`** (matrix) |
+| Runs | `simulations/validation_runs/` | `run_validation_smoke.py` (JSON); **`run_validation_matrix.py`** (CSV + JSON summary) |
+| Docs | `docs/` | **`TEST_PLAN.md`**, **`VALIDATION_REPORT_EXAMPLE.md`** |
 
-**Not yet in scope (later phases):** phase noise, PA nonlinearity, noise figure, CFO **correction**, STO, automated multi-case sweeps, formal Test Plan PDFs.
+**Next (later phases):** phase noise, PA nonlinearity, CFO **correction**, STO, CI workflow on GitHub Actions (optional).
 
 ---
 
-## How to run a smoke validation
+## How to run
 
-From project root (Windows):
+**Smoke (single scenario):**
 
 ```powershell
-py -m pip install -r requirements.txt
 py simulations/validation_runs/run_validation_smoke.py
 py simulations/validation_runs/run_validation_smoke.py --config configs/validation/default_smoke.yaml
 ```
 
-Exit code: **0** = PASS, **1** = FAIL (useful for CI later).
+**Matrix (multiple cases → CSV):**
 
-Reports: `results/validation/validation_report_<timestamp>.json`
+```powershell
+py simulations/validation_runs/run_validation_matrix.py
+py simulations/validation_runs/run_validation_matrix.py --config configs/validation/test_matrix_default.yaml
+```
+
+Exit code: **0** = PASS, **1** = FAIL (smoke: one scenario; matrix: **all** cases must pass).
+
+Artifacts:
+
+- Smoke: `results/validation/validation_report_<timestamp>.json` (gitignored pattern for `*.json`)
+- Matrix: `results/validation/validation_matrix.csv` + `validation_matrix_summary_<timestamp>.json` (summary JSON gitignored)
 
 ---
 
-## Configuration format
+## YAML formats
 
-YAML root keys:
+### Single scenario (`default_smoke.yaml`)
 
-- **`thresholds`:** `max_evm_percent`, `max_ber` (optional; omit or `null` to skip a check)
+- **`thresholds`:** `max_evm_percent`, `max_ber`
 - **`scenario`:** `fft_size`, `cp_len`, `num_symbols`, `modulation`, `snr_db`, `cfo_subcarrier_fraction`, `seed`
 
-Adjust thresholds after you baseline metrics for your scenario (seed, SNR, CFO).
+### Matrix (`test_matrix_default.yaml`)
+
+- **`defaults`:** shared `scenario` fields (e.g. `fft_size`, `num_symbols`, `seed`)
+- **`defaults_thresholds`:** global limits unless a case overrides
+- **`cases`:** list of `{ id, scenario, thresholds }`
+
+CSV columns include measured **EVM/BER**, **limits**, **margins** (limit − measured), and **tx_power_db / rx_power_db**.
 
 ---
 
 ## Relationship to the legacy simulator
 
 - **`run_simulation.py`** — unchanged educational / portfolio BER+EVM runs.
-- **Validation runs** — separate entry point, explicit requirements file, PASS/FAIL and JSON artifacts.
+- **Validation runs** — separate entry points, explicit requirements, PASS/FAIL, tabular output for “validation engineer” storytelling.
 
 ---
 
 ## Roadmap (short)
 
-1. More impairments (phase noise, AM/AM…) + optional correction blocks  
-2. Richer measurements (power, estimated SNR)  
-3. Test matrices + CSV summaries + CI  
-4. Test Plan / Test Report docs under `docs/`
+1. CFO correction (or pilot-based de-rotation) + before/after metrics  
+2. Phase noise & PA (optional)  
+3. CI: `pytest` + matrix job on push (optional)  
 
-See also `README.md` (Validation section) and `docs/next_phase_plan.md`.
+See `README.md`, `docs/TEST_PLAN.md`, and `docs/next_phase_plan.md`.

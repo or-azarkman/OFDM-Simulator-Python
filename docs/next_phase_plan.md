@@ -10,12 +10,15 @@ This document tracks what is done and what remains optional for the OFDM simulat
 
 | Item | Status |
 |------|--------|
-| Package layout: `src/rf_impairments/`, `src/measurements/`, `src/validation/` | **Started** |
-| CFO impairment (digital baseband, no correction in Phase 1) | **Done** |
-| YAML thresholds + smoke runner `simulations/validation_runs/run_validation_smoke.py` | **Done** |
-| Overview doc | **`docs/VALIDATION_OVERVIEW.md`** |
-| Phase noise, PA nonlinearity, noise figure, CFO correction, STO | Planned |
-| Automated sweep matrices + Test Plan / Report templates | Planned |
+| Package layout: `src/rf_impairments/`, `src/measurements/`, `src/validation/` | **Done** |
+| CFO impairment (digital baseband, no correction yet) | **Done** |
+| YAML thresholds + smoke runner `run_validation_smoke.py` | **Done** |
+| **Test matrix** + CSV + margins + `run_validation_matrix.py` | **Done** |
+| **Average power** (dB ref. unity mean \|x\|²) in measurements | **Done** |
+| **Test Plan** + example validation report | **`docs/TEST_PLAN.md`**, **`docs/VALIDATION_REPORT_EXAMPLE.md`** |
+| Overview | **`docs/VALIDATION_OVERVIEW.md`** |
+| Phase noise, PA nonlinearity, noise figure, **CFO correction**, STO | Planned |
+| CI (GitHub Actions) running `pytest` + matrix | Optional |
 
 Legacy OFDM tutorial flow (`run_simulation.py`, BER/EVM plots) remains; validation is an **additional** entry point.
 

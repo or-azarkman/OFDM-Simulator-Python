@@ -74,3 +74,63 @@ def report_to_dict(report: ValidationReport) -> dict[str, Any]:
             for c in report.checks
         ],
     }
+
+
+def requirement_table(report: ValidationReport) -> list[dict[str, Any]]:
+    """
+    Rows suitable for CSV / markdown: requirement vs limit vs measured vs margin vs PASS.
+    """
+    rows: list[dict[str, Any]] = []
+    m = report.metrics
+    for c in report.checks:
+        if c.name == "evm_max":
+            # limit embedded in detail string is fragile; store in extended API later
+            evm = float(m.get("evm_percent", float("nan")))
+            rows.append(
+                {
+                    "requirement": "EVM_RMS",
+                    "unit": "%",
+                    "measured": evm,
+                    "passed": c.passed,
+                    "detail": c.detail,
+                }
+            )
+        elif c.name == "ber_max":
+            ber = float(m.get("ber", float("nan")))
+            rows.append(
+                {
+                    "requirement": "BER",
+                    "unit": "linear",
+                    "measured": ber,
+                    "passed": c.passed,
+                    "detail": c.detail,
+                }
+            )
+    return rows
+
+
+def evaluate_metrics_with_margins(
+    metrics: Mapping[str, float],
+    spec: ValidationSpec,
+) -> tuple[ValidationReport, dict[str, float]]:
+    """
+    Same as evaluate_metrics, plus margin fields for CSV reporting.
+
+    Returns:
+        report, margins dict with keys like evm_margin_pct, ber_margin (if applicable).
+    """
+    report = evaluate_metrics(metrics, spec)
+    margins: dict[str, float] = {}
+    th = spec.thresholds
+
+    if th.max_evm_percent is not None:
+        evm = float(metrics.get("evm_percent", float("nan")))
+        margins["evm_limit_pct"] = float(th.max_evm_percent)
+        margins["evm_margin_pct"] = float(th.max_evm_percent) - evm
+
+    if th.max_ber is not None:
+        ber = float(metrics.get("ber", float("nan")))
+        margins["ber_limit"] = float(th.max_ber)
+        margins["ber_margin"] = float(th.max_ber) - ber
+
+    return report, margins

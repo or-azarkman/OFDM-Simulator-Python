@@ -1,0 +1,41 @@
+# Multi-case validation matrix — run with:
+#   py simulations/validation_runs/run_validation_matrix.py
+
+defaults:
+  fft_size: 64
+  cp_len: 16
+  num_symbols: 350
+  seed: 42
+
+# Applied to every case unless overridden per case
+defaults_thresholds:
+  max_evm_percent: 45.0
+  max_ber: 0.08
+
+cases:
+  - id: baseline_awgn_qpsk
+    scenario:
+      modulation: QPSK
+      snr_db: 20.0
+      cfo_subcarrier_fraction: 0.0
+    thresholds:
+      max_evm_percent: 22.0
+      max_ber: 0.02
+
+  - id: awgn_16qam_moderate_snr
+    scenario:
+      modulation: 16QAM
+      snr_db: 22.0
+      cfo_subcarrier_fraction: 0.0
+    thresholds:
+      max_evm_percent: 35.0
+      max_ber: 0.06
+
+  - id: cfo_mild_qpsk
+    scenario:
+      modulation: QPSK
+      snr_db: 20.0
+      cfo_subcarrier_fraction: 0.04
+    thresholds:
+      max_evm_percent: 48.0
+      max_ber: 0.1

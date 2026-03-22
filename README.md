@@ -4,7 +4,7 @@
 
 OFDM baseband transceiver: theoretical BER (AWGN), Monte Carlo BER vs SNR, QPSK and 16-QAM, AWGN and multipath channels, ZF/MMSE equalization, EVM (Error Vector Magnitude), pilot subcarriers for channel estimation, unit tests.
 
-**Validation platform (in progress):** YAML requirements, CFO impairment model, smoke run with JSON report. See **`docs/VALIDATION_OVERVIEW.md`**.
+**Validation platform:** YAML requirements, CFO impairment, **test matrix + CSV** (limits/margins), **average power** metrics, smoke run, **`docs/TEST_PLAN.md`**. Overview: **`docs/VALIDATION_OVERVIEW.md`**.
 
 ---
 
@@ -41,6 +41,10 @@ py -m pytest tests/ -v
 # RF validation smoke (PASS/FAIL vs thresholds in YAML; writes JSON under results/validation/)
 py simulations/validation_runs/run_validation_smoke.py
 py simulations/validation_runs/run_validation_smoke.py --config configs/validation/default_smoke.yaml
+
+# Validation matrix (multiple cases → CSV + summary JSON; exit 0 only if all cases PASS)
+py simulations/validation_runs/run_validation_matrix.py
+py simulations/validation_runs/run_validation_matrix.py --config configs/validation/test_matrix_default.yaml
 ```
 
 **Linux/macOS** (if `python` or `python3` is in PATH): use `pip install -r requirements.txt`, `python run_simulation.py`, `pytest tests/ -v`.
@@ -101,11 +105,11 @@ OFDM-Simulator-Python/
 │   ├── measurements/       # Metrics API for validation runs
 │   └── validation/         # Thresholds, PASS/FAIL, YAML loading
 ├── configs/
-│   └── validation/         # Example YAML specs (thresholds + scenario)
+│   └── validation/         # YAML specs: smoke + test matrix
 ├── simulations/
 │   ├── config.py
 │   ├── run_ber_and_constellation.py
-│   ├── validation_runs/    # run_validation_smoke.py
+│   ├── validation_runs/    # run_validation_smoke.py, run_validation_matrix.py
 │   ├── plot_ber_comparison.py      # BER plots + comparison table
 │   ├── plot_constellation_comparison.py  # 4×3 constellation grid
 │   ├── plot_evm_comparison.py      # EVM plots + comparison table
@@ -126,7 +130,7 @@ OFDM-Simulator-Python/
 │   ├── <N>_symbols_multipath_zf_pilots/    # multipath with pilots (ZF)
 │   ├── <N>_symbols_multipath_mmse_pilots/  # multipath with pilots (MMSE)
 │   └── summary/                     # comparison table, BER plots, constellation grid, pilot comparison
-├── docs/                            # complete_run_guide.md, ofdm_overview.md, VALIDATION_OVERVIEW.md, …
+├── docs/                            # complete_run_guide.md, ofdm_overview.md, VALIDATION_OVERVIEW.md, TEST_PLAN.md, …
 ├── requirements.txt
 └── README.md
 ```
@@ -216,4 +220,4 @@ MIT License.
 
 ## Notes
 
-OFDM PHY-layer simulation. Mathematical details: `docs/ofdm_overview.md`. Lessons learned, limitations, and future work: `docs/lessons_learned.md`. Next phase / roadmap: `docs/next_phase_plan.md`. **RF validation overview:** `docs/VALIDATION_OVERVIEW.md`.
+OFDM PHY-layer simulation. Mathematical details: `docs/ofdm_overview.md`. Lessons learned, limitations, and future work: `docs/lessons_learned.md`. Next phase / roadmap: `docs/next_phase_plan.md`. **RF validation:** `docs/VALIDATION_OVERVIEW.md`, **`docs/TEST_PLAN.md`**, `docs/VALIDATION_REPORT_EXAMPLE.md`.
