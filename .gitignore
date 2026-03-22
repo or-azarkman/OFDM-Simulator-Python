@@ -52,5 +52,8 @@ docs/DOCUMENTATION_RATINGS.md
 docs/parameters_and_models_guide_hebrew.md
 docs/project_guide_hebrew.md
 
+# Validation smoke runs — timestamped JSON (regenerate with run_validation_smoke.py)
+results/validation/*.json
+
 # Local overrides (keep results in git for portfolio)
 # results/
