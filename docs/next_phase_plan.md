@@ -19,6 +19,7 @@ This document tracks what is done and what remains optional for the OFDM simulat
 | Overview | **`docs/VALIDATION_OVERVIEW.md`** |
 | Phase noise, PA nonlinearity, noise figure, **CFO correction**, STO | Planned |
 | CI (GitHub Actions) running `pytest` + matrix | Optional |
+| Merge validation work to `main` (local fast-forward + `git push origin main`) | **Done** (as of merge bringing `1e1bf46` to `main`) |
 
 Legacy OFDM tutorial flow (`run_simulation.py`, BER/EVM plots) remains; validation is an **additional** entry point.
 
@@ -39,7 +40,7 @@ Legacy OFDM tutorial flow (`run_simulation.py`, BER/EVM plots) remains; validati
 
 **Step 0 — Branch workflow (Documented):** The project uses Git branches for features (e.g. `feature/pilots`); the workflow is documented here and in the README (clone, branch, run, push). No separate "branch workflow" deliverable is required; the status means the process is defined and ready to use.
 
-**Current state:** Steps 1–5, EVM, and Pilots are complete. Remaining optional extensions: CFO, STO (synchronization); 64‑QAM and FEC are optional.
+**Current state:** Steps 1–5, EVM, and Pilots are complete. **CFO:** impairment + validation integration **done**; **CFO correction** in RX still optional next. **STO** (synchronization); 64‑QAM and FEC remain optional.
 
 ---
 
@@ -57,7 +58,7 @@ Legacy OFDM tutorial flow (`run_simulation.py`, BER/EVM plots) remains; validati
 |-----------|-------------|--------|--------|--------|
 | **EVM** | Error Vector Magnitude — standard metric (3GPP, Wi-Fi); symbol-level accuracy | Low | High | **Done.** `src/evm.py`; EVM vs SNR per run; comparison plots and table in `results/summary/evm/`. |
 | **Pilots** | Pilot subcarriers + LS channel estimation; known vs estimated channel | Medium | High | **Done.** `src/pilots.py`; pattern, insertion, LS estimation; integrated in TX/RX; comparison plots in `results/summary/pilots/`. |
-| **CFO** | Carrier frequency offset + correction (e.g. phase rotation, correction loop) | Medium | High | Optional. Sync impairment and correction. |
+| **CFO** | Carrier frequency offset: **impairment** in validation harness (`apply_cfo_to_ofdm_stream`) — **done**; **correction** in RX (preamble/pilots / de-rotation) — **next** for RF-style sync story. | Medium | High | Impairment **done**; correction **planned**. |
 | **STO** | Symbol timing offset + coarse/fine sync (e.g. CP or preamble correlation) | Medium–High | High | Optional. Complements CFO. |
 | 64-QAM | Higher-order modulation (QPSK and 16-QAM already in place) | Low | Medium | Optional. |
 | FEC | Forward error correction (e.g. convolutional, LDPC) | High | High | Optional; larger scope. |

@@ -41,7 +41,8 @@ py simulations/validation_runs/run_validation_matrix.py
 py simulations/validation_runs/run_validation_matrix.py --config configs/validation/test_matrix_default.yaml
 ```
 
-Exit code: **0** = PASS, **1** = FAIL (smoke: one scenario; matrix: **all** cases must pass).
+Exit code: **0** = PASS, **1** = FAIL (smoke: one scenario; matrix: **all** cases must pass).  
+If the default matrix includes **CFO without RX correction**, a CFO case may fail until correction is added or thresholds/scenario are tuned — see **`docs/TEST_PLAN.md`** (matrix note).
 
 Artifacts:
 

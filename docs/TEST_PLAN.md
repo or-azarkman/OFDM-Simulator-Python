@@ -36,6 +36,8 @@ Defined per case in `configs/validation/*.yaml`:
 
 **Global pass:** Smoke = single scenario all checks pass; Matrix = **all** cases pass.
 
+**Matrix note (CFO):** The default case `cfo_mild_qpsk` applies **CFO impairment** while the receiver path **does not yet perform CFO correction**. Without correction, EVM can be very high and BER can approach **0.5** (random decisions) — so this case may **FAIL** until CFO correction is implemented or the scenario/thresholds are relaxed. Baseline AWGN cases without CFO are expected to **PASS**.
+
 ---
 
 ## 4. Test execution
@@ -45,6 +47,8 @@ Defined per case in `configs/validation/*.yaml`:
 | Unit tests | `py -m pytest tests/ -v` |
 | Smoke validation | `py simulations/validation_runs/run_validation_smoke.py` |
 | Validation matrix | `py simulations/validation_runs/run_validation_matrix.py` |
+
+On **Windows**, prefer the **`py`** launcher (`py -m pytest`, `py simulations/...`) if `python` / `pytest` are not on `PATH`.
 
 **Artifacts:** CSV under `results/validation/` (matrix); JSON summaries may be gitignored — regenerate anytime.
 
