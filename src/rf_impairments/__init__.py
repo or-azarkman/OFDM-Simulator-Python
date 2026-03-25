@@ -12,10 +12,16 @@ from src.rf_impairments.cfo import (
     estimate_cfo_subcarrier_fraction_from_cp,
     remove_cfo_from_ofdm_stream,
 )
+from src.rf_impairments.phase_noise import (
+    apply_independent_phase_noise_per_ofdm_symbol,
+    apply_wiener_phase_noise_to_stream,
+)
 
 __all__ = [
     "RFImpairmentChain",
     "apply_cfo_to_ofdm_stream",
     "remove_cfo_from_ofdm_stream",
     "estimate_cfo_subcarrier_fraction_from_cp",
+    "apply_wiener_phase_noise_to_stream",
+    "apply_independent_phase_noise_per_ofdm_symbol",
 ]

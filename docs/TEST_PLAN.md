@@ -21,9 +21,11 @@
 
 - **AWGN** channel after TX (existing `awgn_channel`).
 - **CFO** impairment: digital phase ramp on time-domain samples (`apply_cfo_to_ofdm_stream`).
+- **CFO correction** (validation path): `cfo_correction_mode` — `none` / `genie` / `cp` (see matrix note below).
+- **Phase noise** (optional): `phase_noise_mode` — `none` / `wiener` / `symbol`, with `phase_noise_std_rad` (meaning depends on mode; see `parse_phase_noise` in `src/measurements/ofdm_metrics.py`). Applied after CFO, before AWGN.
 - **Modulation:** QPSK, 16-QAM (existing mod/demod).
 
-**Not yet covered (future):** CFO correction, phase noise, PA nonlinearity, STO, multipath inside validation matrix (can be added incrementally).
+**Not yet covered (future):** PA nonlinearity, STO, multipath inside validation matrix (can be added incrementally).
 
 ---
 
@@ -43,6 +45,8 @@ Defined per case in `configs/validation/*.yaml`:
 - **`cp`** — **CP-based CFO estimate** (Moose-style), then inverse ramp (realistic blind sync).
 
 Measured **`cfo_estimated_subcarrier_fraction`** appears in matrix CSV when mode is **`cp`**.
+
+**Matrix note (phase noise):** Optional keys **`phase_noise_mode`** and **`phase_noise_std_rad`**. CSV includes **`phase_noise_mode`** (0/1/2 = none/wiener/symbol) and **`phase_noise_std_rad`**.
 
 ---
 

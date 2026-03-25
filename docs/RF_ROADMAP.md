@@ -20,13 +20,13 @@ This file complements `docs/next_phase_plan.md` with a **sequential** checklist 
 
 ## Phase 2 — Phase noise
 
-| Step | What |
-|------|------|
-| 1 | Add `apply_phase_noise` (or similar) in `src/rf_impairments/` — Wiener phase on samples or per-OFDM-symbol. |
-| 2 | Extend `measure_awgn_cfo_once` (or a new measurement helper) with optional phase noise parameters. |
-| 3 | Add YAML cases + thresholds; update `TEST_PLAN.md`. |
+| Step | What | Status |
+|------|------|--------|
+| 1 | `apply_wiener_phase_noise_to_stream` + `apply_independent_phase_noise_per_ofdm_symbol` in `src/rf_impairments/phase_noise.py` | Done |
+| 2 | `measure_awgn_cfo_once` + `parse_phase_noise` (`phase_noise_mode`, `phase_noise_std_rad`) | Done |
+| 3 | Matrix YAML + `TEST_PLAN.md`; smoke/matrix runners pass phase-noise keys through | Done |
 
-**Prerequisite:** math model choice (AWGN phase vs piecewise constant per symbol).
+**Models:** **Wiener** (increment σ per sample, continuous phase on flat stream) vs **symbol** (one φ_k per OFDM symbol). Order: CFO → phase noise → AWGN. **No RX phase tracking** in harness (EVM vs ideal TX ref — phase noise shows up as rotation error).
 
 ---
 

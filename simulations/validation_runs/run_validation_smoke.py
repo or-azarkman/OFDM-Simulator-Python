@@ -44,7 +44,11 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    from src.measurements.ofdm_metrics import measure_awgn_cfo_once, parse_cfo_correction_mode
+    from src.measurements.ofdm_metrics import (
+        measure_awgn_cfo_once,
+        parse_cfo_correction_mode,
+        parse_phase_noise,
+    )
     from src.validation.evaluate import evaluate_metrics, load_spec_from_yaml, report_to_dict
 
     cfg_path = PROJECT_ROOT / args.config
@@ -60,6 +64,7 @@ def main() -> int:
     seed = sc.get("seed", 42)
     seed = int(seed) if seed is not None else None
     cfo_mode = parse_cfo_correction_mode(sc)
+    pn_mode, pn_std = parse_phase_noise(sc)
 
     metrics = measure_awgn_cfo_once(
         fft_size=fft_size,
@@ -70,6 +75,8 @@ def main() -> int:
         cfo_subcarrier_fraction=cfo,
         seed=seed,
         cfo_correction_mode=cfo_mode,
+        phase_noise_mode=pn_mode,
+        phase_noise_std_rad=pn_std,
     )
 
     report = evaluate_metrics(metrics, spec)

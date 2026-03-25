@@ -14,14 +14,14 @@ Transmitter → RF impairments (baseband models) → Channel → Receiver → Me
 
 | Layer | Location | Status |
 |--------|-----------|--------|
-| RF impairments | `src/rf_impairments/` | CFO (digital phase ramp); composable `RFImpairmentChain` |
-| Measurements | `src/measurements/` | `measure_awgn_cfo_once` — EVM, BER, **TX/RX average power (dB ref. unity mean \|x\|²)**; AWGN + optional CFO (no CFO correction yet) |
+| RF impairments | `src/rf_impairments/` | CFO; **phase noise** (Wiener or per-symbol); composable `RFImpairmentChain` |
+| Measurements | `src/measurements/` | `measure_awgn_cfo_once` — EVM, BER, **TX/RX average power**; AWGN + optional CFO (correction via `cfo_correction_mode`) + optional **phase noise** (`parse_phase_noise`) |
 | Validation | `src/validation/` | YAML thresholds → `evaluate_metrics` / **`evaluate_metrics_with_margins`** → `ValidationReport`; **`load_matrix_cases`** for multi-case YAML |
 | Config | `configs/validation/*.yaml` | `default_smoke.yaml` (single scenario); **`test_matrix_default.yaml`** (matrix) |
 | Runs | `simulations/validation_runs/` | `run_validation_smoke.py` (JSON); **`run_validation_matrix.py`** (CSV + JSON summary) |
 | Docs | `docs/` | **`TEST_PLAN.md`**, **`VALIDATION_REPORT_EXAMPLE.md`** |
 
-**Next (later phases):** pilot-based CFO refinement (optional); phase noise; PA nonlinearity; STO; CI on GitHub Actions (optional). CP CFO estimate is available via **`cfo_correction_mode: cp`**. See **`docs/RF_ROADMAP.md`**.
+**Next (later phases):** pilot-based CFO refinement (optional); PA nonlinearity; STO; CI on GitHub Actions (optional). **Phase noise** is available via **`phase_noise_mode` / `phase_noise_std_rad`**. CP CFO estimate: **`cfo_correction_mode: cp`**. See **`docs/RF_ROADMAP.md`**.
 
 ---
 
@@ -56,7 +56,7 @@ Artifacts:
 ### Single scenario (`default_smoke.yaml`)
 
 - **`thresholds`:** `max_evm_percent`, `max_ber`
-- **`scenario`:** `fft_size`, `cp_len`, `num_symbols`, `modulation`, `snr_db`, `cfo_subcarrier_fraction`, `seed`
+- **`scenario`:** `fft_size`, `cp_len`, `num_symbols`, `modulation`, `snr_db`, `cfo_subcarrier_fraction`, `cfo_correction_mode`, optional **`phase_noise_mode` / `phase_noise_std_rad`**, `seed`
 
 ### Matrix (`test_matrix_default.yaml`)
 
@@ -77,8 +77,8 @@ CSV columns include measured **EVM/BER**, **limits**, **margins** (limit − mea
 
 ## Roadmap (short)
 
-1. CFO correction (or pilot-based de-rotation) + before/after metrics  
-2. Phase noise & PA (optional)  
+1. CFO correction paths + optional pilot refinement — see `cfo_correction_mode`  
+2. Phase noise — **implemented** (`src/rf_impairments/phase_noise.py`); PA (optional)  
 3. CI: `pytest` + matrix job on push (optional)  
 
 See `README.md`, `docs/TEST_PLAN.md`, and `docs/next_phase_plan.md`.

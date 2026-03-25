@@ -41,3 +41,15 @@ cases:
     thresholds:
       max_evm_percent: 48.0
       max_ber: 0.1
+
+  # Phase 2: multiplicative phase after CFO, before AWGN (see parse_phase_noise)
+  - id: phase_noise_symbol_qpsk_mild
+    scenario:
+      modulation: QPSK
+      snr_db: 20.0
+      cfo_subcarrier_fraction: 0.0
+      phase_noise_mode: symbol
+      phase_noise_std_rad: 0.06
+    thresholds:
+      max_evm_percent: 45.0
+      max_ber: 0.08

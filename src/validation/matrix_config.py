@@ -37,7 +37,10 @@ def load_matrix_cases(path: str | Path) -> tuple[dict[str, Any], list[MatrixCase
               modulation: QPSK
               snr_db: 18
               cfo_subcarrier_fraction: 0.0
-              cfo_correction: false   # optional: true = known CFO inverse on RX (validation)
+              # optional: cfo_correction_mode: none | genie | cp
+              # Legacy: cfo_correction: true → genie
+              # optional: phase_noise_mode: none | wiener | symbol
+              #           phase_noise_std_rad: float (increment std for wiener; phi std per symbol for symbol)
             thresholds:
               max_evm_percent: 25.0
 
